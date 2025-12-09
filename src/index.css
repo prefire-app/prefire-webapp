@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+body {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+background {
+    color: '4F3130'
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100vh;
+}
