@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, use } from "react";
+import { useRef, useEffect, useState, use, useCallback } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -7,7 +7,6 @@ import L from "leaflet";
 import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
-import axios from "axios";
 
 const center: [number, number] = [37.7749, -122.4194]; // San Francisco
 
@@ -37,6 +36,7 @@ function LeafletDrawControls({
             },
         });
 
+        console.log("LeafletDrawControls rendered");
         map.addControl(drawControl);
 
         map.on(L.Draw.Event.CREATED, function (event: any) {
@@ -58,12 +58,22 @@ function LeafletDrawControls({
 export default function MappingTool() {
     const mapRef = useRef<any>(null);
     const [showModal, setShowModal] = useState(true);
-    const [drawnPolygon, setDrawnPolygon] = useState(null);
+    const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+    const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
 
-    const handlePolygonDrawn = async (geojson: any) => {
-        console.log("Polygon GeoJSON:", geojson);
-        setDrawnPolygon(geojson);
-    };
+    const handlePolygonDrawn = useCallback((geojson: any) => {
+        setDrawnPolygons((prev) => {
+            console.log("Previous polygons:", prev);
+            const updatedPolygons = [...prev, geojson];
+            console.log("Updated polygons:", updatedPolygons);
+            return updatedPolygons;
+        });
+        setShowConfirmPopup(true);
+    }, []);
+
+    useEffect(() => {
+        console.log("drawnPolygons updated:", drawnPolygons);
+    }, [drawnPolygons]);
 
     const handleMoveMap = (lat: number, lng: number) => {
         if (mapRef.current) {
@@ -81,7 +91,11 @@ export default function MappingTool() {
                 ref={mapRef}
                 whenReady={() => {}}
             >
-                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                <TileLayer
+                    url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}@2x.jpg"
+                    maxNativeZoom={18}
+                    maxZoom={25}
+                />
                 <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
             </MapContainer>
             {showModal && (
@@ -95,10 +109,11 @@ export default function MappingTool() {
                     />
                 </div>
             )}
-            {drawnPolygon && (
+            {drawnPolygons && drawnPolygons.length > 0 && showConfirmPopup && (
                 <ConfirmSubmitPopup
-                    drawnPolygon={drawnPolygon}
-                    setDrawnPolygon={setDrawnPolygon}
+                    drawnPolygons={drawnPolygons}
+                    setDrawnPolygons={setDrawnPolygons}
+                    setShowConfirmPopup={setShowConfirmPopup}
                 />
             )}
         </div>
