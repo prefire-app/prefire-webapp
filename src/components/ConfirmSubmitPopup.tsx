@@ -16,10 +16,11 @@ function ConfirmSubmitPopup({
                 <div className="mt-4 flex justify-center">
                     <button
                         onClick={async () => {
+                            const fips = "081";
                             try {
                                 const response = await axios.post(
-                                    "http://localhost:8000/upload-geometry",
-                                    drawnPolygon,
+                                    `http://localhost:8000/send-geometry?fips=${fips}`,
+                                    [drawnPolygon]
                                 );
                                 console.log("Backend response:", response);
                                 window.location.href = response.data.image_url;
