@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, use } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -7,7 +7,6 @@ import L from "leaflet";
 import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
-import axios from "axios";
 
 const center: [number, number] = [37.7749, -122.4194]; // San Francisco
 
