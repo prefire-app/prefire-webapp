@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const API_URL = "https://chpjhix9fj.execute-api.us-east-1.amazonaws.com/dev";
+
 function ConfirmSubmitPopup({
     drawnPolygon,
     setDrawnPolygon,
@@ -16,14 +18,14 @@ function ConfirmSubmitPopup({
                 <div className="mt-4 flex justify-center">
                     <button
                         onClick={async () => {
-                            const fips = "081";
                             try {
-                                const response = await axios.post(
-                                    `http://localhost:8000/send-geometry?fips=${fips}`,
-                                    [drawnPolygon]
-                                );
-                                console.log("Backend response:", response);
-                                window.location.href = response.data.image_url;
+                                const fips = "081"; // TODO: determine from location
+                                const response = await axios.post(API_URL, {
+                                    fips,
+                                    geometry: drawnPolygon.geometry,
+                                });
+                                console.log("Backend response:", response.data);
+                                window.location.href = response.data.url;
                                 setDrawnPolygon(null);
                             } catch (error) {
                                 console.error(
