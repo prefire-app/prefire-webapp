@@ -1,13 +1,15 @@
 import axios from "axios";
 
-const API_URL = "https://chpjhix9fj.execute-api.us-east-1.amazonaws.com/dev";
+const API_URL = "http://127.0.0.1:8000/send-geometry";
 
 function ConfirmSubmitPopup({
     drawnPolygon,
     setDrawnPolygon,
+    fips,
 }: {
     drawnPolygon: any;
     setDrawnPolygon: (val: any) => void;
+    fips: string;
 }) {
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
@@ -19,7 +21,6 @@ function ConfirmSubmitPopup({
                     <button
                         onClick={async () => {
                             try {
-                                const fips = "081"; // TODO: determine from location
                                 const response = await axios.post(API_URL, {
                                     fips,
                                     geometry: drawnPolygon.geometry,

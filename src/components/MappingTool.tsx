@@ -7,8 +7,9 @@ import L from "leaflet";
 import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
+import StateCountySelector from "./StateCountySelector";
 
-const center: [number, number] = [37.7749, -122.4194]; // San Francisco
+const center: [number, number] = [36.7783, -119.4179]; // California fallback
 
 function LeafletDrawControls({
     onPolygonDrawn,
@@ -56,7 +57,10 @@ function LeafletDrawControls({
 
 export default function MappingTool() {
     const mapRef = useRef<any>(null);
-    const [showModal, setShowModal] = useState(true);
+    const [showSelector, setShowSelector] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedFips, setSelectedFips] = useState<string | null>(null);
+    const [mapCenter, setMapCenter] = useState<[number, number]>(center);
     const [drawnPolygon, setDrawnPolygon] = useState(null);
 
     const handlePolygonDrawn = async (geojson: any) => {
@@ -73,8 +77,8 @@ export default function MappingTool() {
     return (
         <div className="relative flex justify-center items-center w-full">
             <MapContainer
-                center={center}
-                zoom={15}
+                center={mapCenter}
+                zoom={10}
                 className="h-[750px] w-[85vw] rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
                 style={{ zIndex: 0, height: "750px", width: "85%" }}
                 ref={mapRef}
@@ -83,8 +87,23 @@ export default function MappingTool() {
                 <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                 <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
             </MapContainer>
-            {showModal && (
+            {(showSelector || showModal) && (
                 <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
+            )}
+            {showSelector && (
+                <div className="fixed inset-0 flex items-center justify-center z-20">
+                    <StateCountySelector
+                        onConfirm={(fips, centroid) => {
+                            setSelectedFips(fips);
+                            setMapCenter(centroid);
+                            if (mapRef.current) {
+                                mapRef.current.setView(centroid, 11);
+                            }
+                            setShowSelector(false);
+                            setShowModal(true);
+                        }}
+                    />
+                </div>
             )}
             {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-20">
@@ -94,10 +113,11 @@ export default function MappingTool() {
                     />
                 </div>
             )}
-            {drawnPolygon && (
+            {drawnPolygon && selectedFips && (
                 <ConfirmSubmitPopup
                     drawnPolygon={drawnPolygon}
                     setDrawnPolygon={setDrawnPolygon}
+                    fips={selectedFips}
                 />
             )}
         </div>
