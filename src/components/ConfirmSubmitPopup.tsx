@@ -1,11 +1,15 @@
 import axios from "axios";
 
+const API_URL = "http://127.0.0.1:8000/send-geometry";
+
 function ConfirmSubmitPopup({
     drawnPolygon,
     setDrawnPolygon,
+    fips,
 }: {
     drawnPolygon: any;
     setDrawnPolygon: (val: any) => void;
+    fips: string;
 }) {
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
@@ -17,12 +21,12 @@ function ConfirmSubmitPopup({
                     <button
                         onClick={async () => {
                             try {
-                                const response = await axios.post(
-                                    "http://localhost:8000/upload-geometry",
-                                    drawnPolygon,
-                                );
-                                console.log("Backend response:", response);
-                                window.location.href = response.data.image_url;
+                                const response = await axios.post(API_URL, {
+                                    fips,
+                                    geometry: drawnPolygon.geometry,
+                                });
+                                console.log("Backend response:", response.data);
+                                window.location.href = response.data.url;
                                 setDrawnPolygon(null);
                             } catch (error) {
                                 console.error(
