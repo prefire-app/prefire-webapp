@@ -4,16 +4,16 @@ const UNAVAILABLE_MSG =
     "Sorry, we are working to expand to more states and counties.";
 
 const STATES = [
-    { name: "California", code: "CA", available: true },
-    { name: "Oregon", code: "OR", available: false },
-    { name: "Washington", code: "WA", available: false },
-    { name: "Idaho", code: "ID", available: false },
-    { name: "Montana", code: "MT", available: false },
-    { name: "Wyoming", code: "WY", available: false },
-    { name: "Colorado", code: "CO", available: false },
-    { name: "Utah", code: "UT", available: false },
-    { name: "Arizona", code: "AZ", available: false },
-    { name: "New Mexico", code: "NM", available: false },
+    { name: "California", code: "CA", fips: "06", available: true },
+    { name: "Oregon", code: "OR", fips: "41", available: false },
+    { name: "Washington", code: "WA", fips: "53", available: false },
+    { name: "Idaho", code: "ID", fips: "16", available: false },
+    { name: "Montana", code: "MT", fips: "30", available: false },
+    { name: "Wyoming", code: "WY", fips: "56", available: false },
+    { name: "Colorado", code: "CO", fips: "08", available: false },
+    { name: "Utah", code: "UT", fips: "49", available: false },
+    { name: "Arizona", code: "AZ", fips: "04", available: false },
+    { name: "New Mexico", code: "NM", fips: "35", available: false },
 ];
 
 const COUNTIES: Record<
@@ -40,7 +40,11 @@ const COUNTIES: Record<
 function StateCountySelector({
     onConfirm,
 }: {
-    onConfirm: (fips: string, centroid: [number, number]) => void;
+    onConfirm: (
+        fips: string,
+        centroid: [number, number],
+        stateFips: string,
+    ) => void;
 }) {
     const [selectedState, setSelectedState] = useState<string | null>(null);
     const [selectedCounty, setSelectedCounty] = useState<{
@@ -134,10 +138,14 @@ function StateCountySelector({
             <div className="mt-6 flex justify-end">
                 <button
                     onClick={() => {
-                        if (selectedCounty) {
+                        if (selectedCounty && selectedState) {
+                            const state = STATES.find(
+                                (s) => s.code === selectedState,
+                            )!;
                             onConfirm(
                                 selectedCounty.fips,
                                 selectedCounty.centroid,
+                                state.fips,
                             );
                         }
                     }}
