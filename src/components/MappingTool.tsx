@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, use } from "react";
+import { useRef, useEffect, useState } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -7,9 +7,62 @@ import L from "leaflet";
 import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
-import axios from "axios";
+import StateCountySelector from "./StateCountySelector";
 
-const center: [number, number] = [37.7749, -122.4194]; // San Francisco
+const TIGERWEB_URL =
+    "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";
+
+function CountyBoundary({
+    stateFips,
+    countyFips,
+}: {
+    stateFips: string;
+    countyFips: string;
+}) {
+    const map = useMap();
+    const layerRef = useRef<L.GeoJSON | null>(null);
+
+    useEffect(() => {
+        const params = new URLSearchParams({
+            where: `STATE='${stateFips}' AND COUNTY='${countyFips}'`,
+            outFields: "NAME",
+            geometryPrecision: "5",
+            f: "geojson",
+            outSR: "4326",
+        });
+
+        fetch(`${TIGERWEB_URL}?${params}`)
+            .then((res) => res.json())
+            .then((data) => {
+                if (layerRef.current) {
+                    map.removeLayer(layerRef.current);
+                }
+                layerRef.current = L.geoJSON(data, {
+                    style: {
+                        color: "#D8BD8A",
+                        weight: 2.5,
+                        fillColor: "#D8BD8A",
+                        fillOpacity: 0.08,
+                    },
+                });
+                layerRef.current.addTo(map);
+            })
+            .catch(() => {
+                // silently fail — outline is decorative
+            });
+
+        return () => {
+            if (layerRef.current) {
+                map.removeLayer(layerRef.current);
+                layerRef.current = null;
+            }
+        };
+    }, [map, stateFips, countyFips]);
+
+    return null;
+}
+
+const center: [number, number] = [36.7783, -119.4179]; // California fallback
 
 function LeafletDrawControls({
     onPolygonDrawn,
@@ -57,7 +110,13 @@ function LeafletDrawControls({
 
 export default function MappingTool() {
     const mapRef = useRef<any>(null);
-    const [showModal, setShowModal] = useState(true);
+    const [showSelector, setShowSelector] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [selectedFips, setSelectedFips] = useState<string | null>(null);
+    const [selectedStateFips, setSelectedStateFips] = useState<string | null>(
+        null,
+    );
+    const [mapCenter, setMapCenter] = useState<[number, number]>(center);
     const [drawnPolygon, setDrawnPolygon] = useState(null);
 
     const handlePolygonDrawn = async (geojson: any) => {
@@ -74,8 +133,8 @@ export default function MappingTool() {
     return (
         <div className="relative flex justify-center items-center w-full">
             <MapContainer
-                center={center}
-                zoom={15}
+                center={mapCenter}
+                zoom={10}
                 className="h-[750px] w-[85vw] rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
                 style={{ zIndex: 0, height: "750px", width: "85%" }}
                 ref={mapRef}
@@ -83,9 +142,31 @@ export default function MappingTool() {
             >
                 <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
                 <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
+                {selectedFips && selectedStateFips && (
+                    <CountyBoundary
+                        stateFips={selectedStateFips}
+                        countyFips={selectedFips}
+                    />
+                )}
             </MapContainer>
-            {showModal && (
+            {(showSelector || showModal) && (
                 <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
+            )}
+            {showSelector && (
+                <div className="fixed inset-0 flex items-center justify-center z-20">
+                    <StateCountySelector
+                        onConfirm={(fips, centroid, stateFips) => {
+                            setSelectedFips(fips);
+                            setSelectedStateFips(stateFips);
+                            setMapCenter(centroid);
+                            if (mapRef.current) {
+                                mapRef.current.setView(centroid, 11);
+                            }
+                            setShowSelector(false);
+                            setShowModal(true);
+                        }}
+                    />
+                </div>
             )}
             {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-20">
@@ -95,10 +176,11 @@ export default function MappingTool() {
                     />
                 </div>
             )}
-            {drawnPolygon && (
+            {drawnPolygon && selectedFips && (
                 <ConfirmSubmitPopup
                     drawnPolygon={drawnPolygon}
                     setDrawnPolygon={setDrawnPolygon}
+                    fips={selectedFips}
                 />
             )}
         </div>
