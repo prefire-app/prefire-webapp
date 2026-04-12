@@ -118,6 +118,7 @@ export default function MappingTool() {
     );
     const [mapCenter, setMapCenter] = useState<[number, number]>(center);
     const [drawnPolygon, setDrawnPolygon] = useState(null);
+    const [layer, setLayer] = useState<"satellite" | "street">("satellite");
 
     const handlePolygonDrawn = async (geojson: any) => {
         console.log("Polygon GeoJSON:", geojson);
@@ -135,12 +136,26 @@ export default function MappingTool() {
             <MapContainer
                 center={mapCenter}
                 zoom={10}
+                maxZoom={22}
                 className="h-[750px] w-[85vw] rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
                 style={{ zIndex: 0, height: "750px", width: "85%" }}
                 ref={mapRef}
                 whenReady={() => {}}
             >
-                <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
+                {layer === "satellite" ? (
+                    <TileLayer
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        maxNativeZoom={19}
+                        maxZoom={22}
+                    />
+                ) : (
+                    <TileLayer
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        maxNativeZoom={19}
+                        maxZoom={22}
+                    />
+                )}
                 <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
                 {selectedFips && selectedStateFips && (
                     <CountyBoundary
@@ -176,6 +191,29 @@ export default function MappingTool() {
                     />
                 </div>
             )}
+            {/* Layer toggle */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
+                <button
+                    onClick={() => setLayer("satellite")}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        layer === "satellite"
+                            ? "bg-[#D8BD8A] text-black"
+                            : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                    }`}
+                >
+                    Satellite
+                </button>
+                <button
+                    onClick={() => setLayer("street")}
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                        layer === "street"
+                            ? "bg-[#D8BD8A] text-black"
+                            : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                    }`}
+                >
+                    Street
+                </button>
+            </div>
             {drawnPolygon && selectedFips && (
                 <ConfirmSubmitPopup
                     drawnPolygon={drawnPolygon}
