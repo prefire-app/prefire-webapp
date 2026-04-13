@@ -41,23 +41,77 @@ Additional states and counties are in progress.
 ### Prerequisites
 
 - Node.js ≥ 18
+- AWS CLI installed and configured (`aws configure`)
 - A running instance of the Prefire backend API
 
-### Install & run
+### 1. Clone and install
 
 ```bash
+git clone <repo-url>
+cd prefire-webapp
 npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and fill in your values:
+
+```
+VITE_API_URL=http://127.0.0.1:8000/send-geometry
+```
+
+### 3. Run locally
+
+```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+App runs at `http://localhost:5173`. Changes hot-reload automatically.
 
-### Build for production
+### 4. Run a production preview locally
 
 ```bash
 npm run build
 npm run preview
 ```
+
+Previews the built `dist/` output at `http://localhost:4173`.
+
+---
+
+## Deploying to AWS S3
+
+### Deploy
+
+```bash
+./deploy.sh your-bucket-name
+```
+
+With a CloudFront distribution in front (recommended for HTTPS):
+
+```bash
+./deploy.sh your-bucket-name YOUR_CF_DISTRIBUTION_ID
+```
+
+The deploy script:
+
+- Runs `npm run build`
+- Uploads hashed assets (`/assets/*`) with a 1-year cache header
+- Uploads `index.html` and other root files with no-cache headers so updates are instant
+- Configures S3 for SPA routing (404s return `index.html` so React Router works)
+- Optionally invalidates the CloudFront cache
+
+### Deploying future changes
+
+```bash
+./deploy.sh your-bucket-name
+```
+
+That's it — run the same command every time you want to push an update.
 
 ---
 
@@ -96,42 +150,20 @@ src/
 The frontend POSTs to `/send-geometry` on the configured backend:
 
 ```
-POST http://127.0.0.1:8000/send-geometry
+POST <VITE_API_URL>
 Content-Type: application/json
 
 {
   "fips": "081",
+  "email": "user@example.com",
   "geometry": [ ...array of GeoJSON geometry objects... ]
 }
 ```
 
-> To point at a different backend, update `API_URL` in `src/components/ConfirmSubmitPopup.tsx`.
+The backend URL is set via the `VITE_API_URL` environment variable. See `.env.example`.
 
 ---
 
 ## License
 
 Private — all rights reserved.
-
-{
-files: ['**/*.{ts,tsx}'],
-extends: [
-// Other configs...
-// Enable lint rules for React
-reactX.configs['recommended-typescript'],
-// Enable lint rules for React DOM
-reactDom.configs.recommended,
-],
-languageOptions: {
-parserOptions: {
-project: ['./tsconfig.node.json', './tsconfig.app.json'],
-tsconfigRootDir: import.meta.dirname,
-},
-// other options...
-},
-},
-])
-
-```
-
-```
