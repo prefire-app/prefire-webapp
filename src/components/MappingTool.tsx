@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -92,14 +92,17 @@ function LeafletDrawControls({
 
         map.addControl(drawControl);
 
-        map.on(L.Draw.Event.CREATED, function (event: any) {
-            const layer = event.layer;
+        function handleCreated(event: any) {
+            const layer = (event as any).layer;
             drawnItemsRef.current.addLayer(layer);
             const geojson = layer.toGeoJSON();
             onPolygonDrawn(geojson);
-        });
+        }
+
+        map.on(L.Draw.Event.CREATED, handleCreated);
 
         return () => {
+            map.off(L.Draw.Event.CREATED, handleCreated);
             map.removeControl(drawControl);
             map.removeLayer(drawnItemsRef.current);
         };
@@ -117,13 +120,13 @@ export default function MappingTool() {
         null,
     );
     const [mapCenter, setMapCenter] = useState<[number, number]>(center);
-    const [drawnPolygon, setDrawnPolygon] = useState(null);
+    const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [layer, setLayer] = useState<"satellite" | "street">("satellite");
 
-    const handlePolygonDrawn = async (geojson: any) => {
-        console.log("Polygon GeoJSON:", geojson);
-        setDrawnPolygon(geojson);
-    };
+    const handlePolygonDrawn = useCallback((geojson: any) => {
+        setDrawnPolygons((prev) => [...prev, geojson]);
+    }, []);
 
     const handleMoveMap = (lat: number, lng: number) => {
         if (mapRef.current) {
@@ -191,6 +194,28 @@ export default function MappingTool() {
                     />
                 </div>
             )}
+            {/* Polygon count + submit */}
+            {drawnPolygons.length > 0 && !showConfirm && (
+                <div className="absolute top-4 right-[8%] z-10 flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
+                    <span className="text-[#efefd1] text-sm">
+                        {drawnPolygons.length}{" "}
+                        {drawnPolygons.length === 1 ? "polygon" : "polygons"}{" "}
+                        drawn
+                    </span>
+                    <button
+                        onClick={() => setShowConfirm(true)}
+                        className="bg-[#D8BD8A] text-black text-sm font-semibold px-3 py-1 rounded hover:bg-[#c9ae7a] transition-colors"
+                    >
+                        Done?
+                    </button>
+                    <button
+                        onClick={() => setDrawnPolygons([])}
+                        className="text-[#efefd1] opacity-60 hover:opacity-100 text-xs underline transition-opacity"
+                    >
+                        Clear
+                    </button>
+                </div>
+            )}
             {/* Layer toggle */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
                 <button
@@ -214,10 +239,14 @@ export default function MappingTool() {
                     Street
                 </button>
             </div>
-            {drawnPolygon && selectedFips && (
+            {showConfirm && selectedFips && (
                 <ConfirmSubmitPopup
-                    drawnPolygon={drawnPolygon}
-                    setDrawnPolygon={setDrawnPolygon}
+                    drawnPolygons={drawnPolygons}
+                    onClose={() => setShowConfirm(false)}
+                    onClear={() => {
+                        setDrawnPolygons([]);
+                        setShowConfirm(false);
+                    }}
                     fips={selectedFips}
                 />
             )}
