@@ -10,27 +10,20 @@
 
 set -euo pipefail
 
-BUCKET="${1:-}"
-CF_DIST="${2:-}"
+BUCKET="${1:-prefire-webapp}"
+CF_DIST="${2:-E37O4COPWXGZVT}"
 AWS_PROFILE="${AWS_PROFILE:-prefire-root}"
-
-if [[ -z "$BUCKET" ]]; then
-  echo "Usage: ./deploy.sh <s3-bucket-name> [cloudfront-distribution-id]"
-  exit 1
-fi
 
 echo "==> Building for production..."
 npm run build
 
 echo "==> Syncing to s3://$BUCKET ..."
-# Upload hashed assets with long cache (1 year)
 aws s3 sync dist/assets s3://"$BUCKET"/assets \
   --cache-control "public, max-age=31536000, immutable" \
   --profile "$AWS_PROFILE" \
   --delete
   
 
-# Upload everything else (index.html etc.) with no cache so updates are instant
 aws s3 sync dist s3://"$BUCKET" \
   --exclude "assets/*" \
   --cache-control "public, max-age=0, must-revalidate" \
