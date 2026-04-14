@@ -2,18 +2,6 @@
 
 A web application that helps homeowners and property managers assess and improve their defensible space against wildfires. Users select their county, search for their property address, draw one or more polygons on a satellite map, and submit the area for automated analysis.
 
----
-
-## Features
-
-- **State & County selection** — choose from supported counties across the western US; unavailable areas are clearly indicated
-- **Interactive mapping** — satellite and street layer options with zoom up to level 22, county boundary overlay, and multi-polygon drawing via Leaflet Draw
-- **Address search** — geocoding via Nominatim to jump directly to a property
-- **Multi-polygon submission** — draw multiple areas in one session and submit them all at once for backend analysis
-- **Learning resources** — curated links to defensible space guidelines from CAL FIRE, NFPA, USFS, and Ready for Wildfire
-
----
-
 ## Supported Counties (California)
 
 Alameda · Contra Costa · El Dorado · Los Angeles · Marin · Nevada · Orange · Placer · San Diego · San Mateo · Santa Clara · Santa Cruz · Sonoma
@@ -88,30 +76,8 @@ Previews the built `dist/` output at `http://localhost:4173`.
 ### Deploy
 
 ```bash
-./deploy.sh your-bucket-name
-```
-
-With a CloudFront distribution in front (recommended for HTTPS):
-
-```bash
 ./deploy.sh your-bucket-name YOUR_CF_DISTRIBUTION_ID
 ```
-
-The deploy script:
-
-- Runs `npm run build`
-- Uploads hashed assets (`/assets/*`) with a 1-year cache header
-- Uploads `index.html` and other root files with no-cache headers so updates are instant
-- Configures S3 for SPA routing (404s return `index.html` so React Router works)
-- Optionally invalidates the CloudFront cache
-
-### Deploying future changes
-
-```bash
-./deploy.sh your-bucket-name
-```
-
-That's it — run the same command every time you want to push an update.
 
 ---
 
@@ -137,11 +103,7 @@ src/
 
 ## User Flow
 
-1. Navigate to **Analyzer** in the nav bar (`/map`)
-2. Select your **state and county** from the selector
-3. Search for your **property address** to center the map
-4. Use the **draw tools** to outline one or more areas of interest
-5. Click **Submit** to send the geometry and county FIPS code to the backend for analysis
+wip
 
 ---
 
