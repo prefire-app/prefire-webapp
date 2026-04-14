@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Environment variables — never commit secrets
+.env
+.env.local
+.env.production
+
+# AWS deployment config
+cf-config.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
