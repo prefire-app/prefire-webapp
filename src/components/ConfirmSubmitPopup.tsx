@@ -2,8 +2,8 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL =
-    import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/send-geometry";
+const API_URL = import.meta.env.NODE_ENV === "local" ? "http://127.0.0.1:8000/send-geometry"
+    : "https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com/send-geometry";
 
 function ConfirmSubmitPopup({
     drawnPolygons,
