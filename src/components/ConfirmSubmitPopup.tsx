@@ -8,7 +8,6 @@ const API_URL = import.meta.env.NODE_ENV === "local" ? "http://127.0.0.1:8000/se
 function ConfirmSubmitPopup({
     drawnPolygons,
     onClose,
-    onClear,
     fips,
 }: {
     drawnPolygons: any[];
