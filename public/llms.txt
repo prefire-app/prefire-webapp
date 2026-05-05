@@ -1,0 +1,24 @@
+# Prefire
+
+> A free wildfire defensible space mapping tool for homeowners and communities.
+
+Prefire helps property owners assess and improve their defensible space against wildfires. Users select their county, draw polygons around their property using an interactive satellite map, and submit the geometry to receive a personalized fire preparedness report via email. The tool is free to use with no account required.
+
+## Pages
+
+- /: Home — overview of the tool and calls to action
+- /map: Interactive defensible space mapping tool (Leaflet-based satellite map with polygon drawing)
+- /learning: Curated wildfire preparedness and defensible space resources from CAL FIRE, NFPA, USFS, and Ready for Wildfire
+- /donate: Support the project via Venmo
+
+## About
+
+Prefire is a public-interest project built to democratize wildfire risk assessment for everyday homeowners. It is not affiliated with any insurance company or government agency. The tool currently focuses on California counties.
+
+## Contact
+
+Reports are delivered via email from prefire@prefire.online.
+
+## Source
+
+https://prefire.online
