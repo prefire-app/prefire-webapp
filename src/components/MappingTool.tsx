@@ -363,11 +363,6 @@ export default function MappingTool() {
                 <ConfirmSubmitPopup
                     drawnPolygons={drawnPolygons}
                     onClose={() => setShowConfirm(false)}
-                    onClear={() => {
-                        setDrawnPolygons([]);
-                        clearDrawnLayers.current();
-                        setShowConfirm(false);
-                    }}
                     fips={selectedFips}
                 />
             )}
