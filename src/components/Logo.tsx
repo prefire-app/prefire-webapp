@@ -5,7 +5,7 @@ function Logo() {
   return (
     <div className="font-bold text-xl text-[#efefd1] hover:underline">
       <button className="hover:underline" onClick={() => navigate("/")}>
-        prefire_
+        prefire
       </button>
     </div>
   );

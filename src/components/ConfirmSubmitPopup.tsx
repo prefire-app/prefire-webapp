@@ -8,6 +8,7 @@ const API_URL = import.meta.env.NODE_ENV === "local" ? "http://127.0.0.1:8000/se
 function ConfirmSubmitPopup({
     drawnPolygons,
     onClose,
+    onClear,
     fips,
 }: {
     drawnPolygons: any[];
@@ -111,6 +112,12 @@ function ConfirmSubmitPopup({
                                 className="bg-[#aa5042] px-4 py-2 rounded text-[#efefd1]"
                             >
                                 Cancel
+                            </button>
+                            <button
+                                onClick={onClear}
+                                className="bg-[#aa5042] px-4 py-2 rounded text-[#efefd1] border border-[#d8bd8a]/40 ml-2"
+                            >
+                                Clear all
                             </button>
                         </div>
                     </>

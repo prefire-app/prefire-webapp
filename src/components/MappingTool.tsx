@@ -7,6 +7,7 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import L from "leaflet";
 import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
+import AnalyzerGuide from "./AnalyzerGuide";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
 import StateCountySelector from "./StateCountySelector";
 
@@ -119,14 +120,17 @@ const center: [number, number] = [36.7783, -119.4179]; // California fallback
 
 function LeafletDrawControls({
     onPolygonDrawn,
+    onClearRef,
 }: {
     onPolygonDrawn: (geojson: any) => void;
+    onClearRef: (clearFn: () => void) => void;
 }) {
     const map = useMap();
     const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
 
     useEffect(() => {
         map.addLayer(drawnItemsRef.current);
+        onClearRef(() => drawnItemsRef.current.clearLayers());
 
         const drawControl = new L.Control.Draw({
             draw: {
@@ -166,7 +170,9 @@ function LeafletDrawControls({
 
 export default function MappingTool() {
     const mapRef = useRef<any>(null);
-    const [showSelector, setShowSelector] = useState(true);
+    const [showGuide, setShowGuide] = useState(true);
+    const [setupComplete, setSetupComplete] = useState(false);
+    const [showSelector, setShowSelector] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [selectedFips, setSelectedFips] = useState<string | null>(null);
     const [selectedStateFips, setSelectedStateFips] = useState<string | null>(
@@ -178,6 +184,10 @@ export default function MappingTool() {
     const [layer, setLayer] = useState<"satellite" | "street">("satellite");
     const [showBuildings, setShowBuildings] = useState(false);
     const [mapZoom, setMapZoom] = useState(10);
+
+    const isBlocked = showGuide || showSelector || showModal;
+
+    const clearDrawnLayers = useRef<() => void>(() => {});
 
     const handlePolygonDrawn = useCallback((geojson: any) => {
         setDrawnPolygons((prev) => [...prev, geojson]);
@@ -216,7 +226,10 @@ export default function MappingTool() {
                 )}
                 <PMTilesBuildingsLayer visible={showBuildings} />
                 <ZoomTracker onZoomChange={setMapZoom} />
-                <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
+                <LeafletDrawControls
+                    onPolygonDrawn={handlePolygonDrawn}
+                    onClearRef={(fn) => { clearDrawnLayers.current = fn; }}
+                />
                 {selectedFips && selectedStateFips && (
                     <CountyBoundary
                         stateFips={selectedStateFips}
@@ -224,8 +237,20 @@ export default function MappingTool() {
                     />
                 )}
             </MapContainer>
-            {(showSelector || showModal) && (
+            {(showGuide || showSelector || showModal) && (
                 <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
+            )}
+            {showGuide && (
+                <div className="fixed inset-0 flex items-center justify-center z-20">
+                    <AnalyzerGuide
+                        onDismiss={() => {
+                            setShowGuide(false);
+                            if (!setupComplete) {
+                                setShowSelector(true);
+                            }
+                        }}
+                    />
+                </div>
             )}
             {showSelector && (
                 <div className="fixed inset-0 flex items-center justify-center z-20">
@@ -237,6 +262,7 @@ export default function MappingTool() {
                             if (mapRef.current) {
                                 mapRef.current.setView(centroid, 11);
                             }
+                            setSetupComplete(true);
                             setShowSelector(false);
                             setShowModal(true);
                         }}
@@ -266,15 +292,30 @@ export default function MappingTool() {
                         Done?
                     </button>
                     <button
-                        onClick={() => setDrawnPolygons([])}
+                        onClick={() => {
+                            setDrawnPolygons([]);
+                            clearDrawnLayers.current();
+                        }}
                         className="text-[#efefd1] opacity-60 hover:opacity-100 text-xs underline transition-opacity"
                     >
                         Clear
                     </button>
                 </div>
             )}
+            {/* Help button */}
+            {!showGuide && (
+                <button
+                    onClick={() => setShowGuide(true)}
+                    aria-label="Open guide"
+                    className={`absolute bottom-6 left-[10%] z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#aa5042] border border-[#D8BD8A] text-[#efefd1] text-sm font-bold shadow-lg hover:bg-[#c0604e] transition-colors transition-opacity ${
+                        isBlocked ? "opacity-50 pointer-events-none" : ""
+                    }`}
+                >
+                    ?
+                </button>
+            )}
             {/* Layer toggle */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+            <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 transition-opacity ${isBlocked ? "opacity-50 pointer-events-none" : ""}`}>
                 <div className="flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
                     <button
                         onClick={() => setLayer("satellite")}
@@ -324,6 +365,7 @@ export default function MappingTool() {
                     onClose={() => setShowConfirm(false)}
                     onClear={() => {
                         setDrawnPolygons([]);
+                        clearDrawnLayers.current();
                         setShowConfirm(false);
                     }}
                     fips={selectedFips}
