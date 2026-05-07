@@ -8,13 +8,13 @@ export default function Donate() {
             </h1>
             <p className="text-[#efefd1] opacity-80 text-lg max-w-xl mb-2">
                 Prefire is a free, grassroots tool built to help everyday
-                homeowners protect their property from wildfires — no insurance
-                company, no middleman.
+                homeowners protect their property from wildfires. We do not associate with
+                insurance companies like other tools.
             </p>
             <p className="text-[#efefd1] opacity-80 text-lg max-w-xl mb-10">
                 If this tool has been useful to you, consider buying us a
                 coffee. Every dollar goes toward keeping the servers running and
-                expanding to more counties.
+                expanding to more counties and states.
             </p>
             <a
                 href={VENMO_URL}
