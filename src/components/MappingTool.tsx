@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { leafletLayer, PolygonSymbolizer } from "protomaps-leaflet";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
@@ -59,6 +60,58 @@ function CountyBoundary({
         };
     }, [map, stateFips, countyFips]);
 
+    return null;
+}
+
+const PMTILES_URL =
+    "https://prefire-dev-data.s3.us-east-1.amazonaws.com/pmtiles/buildings-ca.pmtiles";
+const BUILDING_MIN_ZOOM = 12;
+
+function PMTilesBuildingsLayer({ visible }: { visible: boolean }) {
+    const map = useMap();
+    const layerRef = useRef<any>(null);
+
+    useEffect(() => {
+        if (visible) {
+            layerRef.current = leafletLayer({
+                url: PMTILES_URL,
+                maxDataZoom: 16,
+                paintRules: [
+                    {
+                        dataLayer: "buildings",
+                        symbolizer: new PolygonSymbolizer({
+                            fill: "rgba(255, 107, 53, 0.15)",
+                            stroke: "#FF6B35",
+                            width: 1.5,
+                        }),
+                    },
+                ],
+                labelRules: [],
+            });
+            layerRef.current.addTo(map);
+        }
+
+        return () => {
+            if (layerRef.current) {
+                map.removeLayer(layerRef.current);
+                layerRef.current = null;
+            }
+        };
+    }, [map, visible]);
+
+    return null;
+}
+
+function ZoomTracker({
+    onZoomChange,
+}: {
+    onZoomChange: (zoom: number) => void;
+}) {
+    const map = useMap();
+    useMapEvents({ zoomend: () => onZoomChange(map.getZoom()) });
+    useEffect(() => {
+        onZoomChange(map.getZoom());
+    }, [map, onZoomChange]);
     return null;
 }
 
@@ -123,6 +176,8 @@ export default function MappingTool() {
     const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [layer, setLayer] = useState<"satellite" | "street">("satellite");
+    const [showBuildings, setShowBuildings] = useState(false);
+    const [mapZoom, setMapZoom] = useState(10);
 
     const handlePolygonDrawn = useCallback((geojson: any) => {
         setDrawnPolygons((prev) => [...prev, geojson]);
@@ -153,12 +208,14 @@ export default function MappingTool() {
                     />
                 ) : (
                     <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                        attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
                         maxNativeZoom={19}
                         maxZoom={22}
                     />
                 )}
+                <PMTilesBuildingsLayer visible={showBuildings} />
+                <ZoomTracker onZoomChange={setMapZoom} />
                 <LeafletDrawControls onPolygonDrawn={handlePolygonDrawn} />
                 {selectedFips && selectedStateFips && (
                     <CountyBoundary
@@ -217,27 +274,49 @@ export default function MappingTool() {
                 </div>
             )}
             {/* Layer toggle */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
-                <button
-                    onClick={() => setLayer("satellite")}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                        layer === "satellite"
-                            ? "bg-[#D8BD8A] text-black"
-                            : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
-                    }`}
-                >
-                    Satellite
-                </button>
-                <button
-                    onClick={() => setLayer("street")}
-                    className={`px-4 py-2 text-sm font-medium transition-colors ${
-                        layer === "street"
-                            ? "bg-[#D8BD8A] text-black"
-                            : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
-                    }`}
-                >
-                    Street
-                </button>
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3">
+                <div className="flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
+                    <button
+                        onClick={() => setLayer("satellite")}
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                            layer === "satellite"
+                                ? "bg-[#D8BD8A] text-black"
+                                : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                        }`}
+                    >
+                        Satellite
+                    </button>
+                    <button
+                        onClick={() => setLayer("street")}
+                        className={`px-4 py-2 text-sm font-medium transition-colors ${
+                            layer === "street"
+                                ? "bg-[#D8BD8A] text-black"
+                                : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                        }`}
+                    >
+                        Topo
+                    </button>
+                </div>
+                <div className="relative group">
+                    <button
+                        onClick={() => setShowBuildings((b) => !b)}
+                        disabled={mapZoom < BUILDING_MIN_ZOOM}
+                        className={`px-4 py-2 text-sm font-medium rounded shadow-lg border transition-colors ${
+                            mapZoom < BUILDING_MIN_ZOOM
+                                ? "bg-[#6b3d37] text-[#efefd1] opacity-50 border-[#D8BD8A] cursor-not-allowed"
+                                : showBuildings
+                                ? "bg-[#FF6B35] text-white border-[#FF6B35] hover:bg-[#e55a25]"
+                                : "bg-[#aa5042] text-[#efefd1] border-[#D8BD8A] hover:bg-[#c0604e]"
+                        }`}
+                    >
+                        Building Footprints
+                    </button>
+                    {mapZoom < BUILDING_MIN_ZOOM && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 text-center text-xs text-[#efefd1] bg-black bg-opacity-75 rounded px-2 py-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                            Zoom in further to enable building footprints
+                        </div>
+                    )}
+                </div>
             </div>
             {showConfirm && selectedFips && (
                 <ConfirmSubmitPopup
