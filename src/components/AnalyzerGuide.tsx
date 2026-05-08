@@ -93,11 +93,13 @@ const pages: { title: string; content: React.ReactNode }[] = [
                             what you've outlined.
                         </p>
                     </div>
-                    <img
-                        src="/poly_tool.gif"
-                        alt="Selecting the polygon tool and drawing a polygon on the map"
-                        className="w-full mx-auto block max-h-45 object-contain"
-                    />
+                    <div className="h-28 flex items-center justify-center">
+                        <img
+                            src="/poly_tool.gif"
+                            alt="Selecting the polygon tool and drawing a polygon on the map"
+                            className="w-1/2 h-full object-contain rounded-lg border border-[#D8BD8A] border-opacity-20"
+                        />
+                    </div>
                 </div>
             </>
         ),
@@ -200,7 +202,7 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
             </div>
 
             {/* Page content — grid-stack so container height = tallest page */}
-            <div className="px-5 pt-4 pb-2" style={{ display: "grid" }}>
+            <div className="px-5 pt-4 pb-4" style={{ display: "grid" }}>
                 {pages.map((page, i) => (
                     <div
                         key={i}
@@ -220,7 +222,7 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
             </div>
 
             {/* Footer: arrows + dots */}
-            <div className="flex items-center justify-between px-5 py-4 border-t border-[#D8BD8A] border-opacity-30 mt-2">
+            <div className="flex items-center justify-between px-5 py-4 border-t border-[#D8BD8A] border-opacity-30">
                 {/* Left arrow */}
                 <div className="w-24 flex justify-start">
                 <button
