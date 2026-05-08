@@ -200,13 +200,13 @@ export default function MappingTool() {
     };
 
     return (
-        <div className="relative flex justify-center items-center w-full">
+        <div className="relative h-full flex flex-col p-6 md:p-12 md:pb-14 max-w-4xl mx-auto">
             <MapContainer
                 center={mapCenter}
                 zoom={10}
                 maxZoom={22}
-                className="h-[750px] w-[85vw] rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
-                style={{ zIndex: 0, height: "750px", width: "85%" }}
+                className="flex-1 min-h-0 w-full rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
+                style={{ zIndex: 0 }}
                 ref={mapRef}
                 whenReady={() => {}}
             >
@@ -277,86 +277,89 @@ export default function MappingTool() {
                     />
                 </div>
             )}
-            {/* Polygon count + submit */}
-            {drawnPolygons.length > 0 && !showConfirm && (
-                <div className="absolute top-4 right-[8%] z-10 flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
-                    <span className="text-[#efefd1] text-sm">
-                        {drawnPolygons.length}{" "}
-                        {drawnPolygons.length === 1 ? "polygon" : "polygons"}{" "}
-                        drawn
-                    </span>
+            {/* Button overlay — positioned to exactly match the map's edges */}
+            <div className="absolute inset-6 md:inset-12 md:bottom-14 pointer-events-none z-10">
+                {/* Polygon count + submit */}
+                {drawnPolygons.length > 0 && !showConfirm && (
+                    <div className="absolute top-4 right-4 pointer-events-auto flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
+                        <span className="text-[#efefd1] text-sm">
+                            {drawnPolygons.length}{" "}
+                            {drawnPolygons.length === 1 ? "polygon" : "polygons"}{" "}
+                            drawn
+                        </span>
+                        <button
+                            onClick={() => setShowConfirm(true)}
+                            className="bg-[#D8BD8A] text-black text-sm font-semibold px-3 py-1 rounded hover:bg-[#c9ae7a] transition-colors"
+                        >
+                            Done?
+                        </button>
+                        <button
+                            onClick={() => {
+                                setDrawnPolygons([]);
+                                clearDrawnLayers.current();
+                            }}
+                            className="text-[#efefd1] opacity-60 hover:opacity-100 text-xs underline transition-opacity"
+                        >
+                            Clear
+                        </button>
+                    </div>
+                )}
+                {/* Help button */}
+                {!showGuide && (
                     <button
-                        onClick={() => setShowConfirm(true)}
-                        className="bg-[#D8BD8A] text-black text-sm font-semibold px-3 py-1 rounded hover:bg-[#c9ae7a] transition-colors"
-                    >
-                        Done?
-                    </button>
-                    <button
-                        onClick={() => {
-                            setDrawnPolygons([]);
-                            clearDrawnLayers.current();
-                        }}
-                        className="text-[#efefd1] opacity-60 hover:opacity-100 text-xs underline transition-opacity"
-                    >
-                        Clear
-                    </button>
-                </div>
-            )}
-            {/* Help button */}
-            {!showGuide && (
-                <button
-                    onClick={() => setShowGuide(true)}
-                    aria-label="Open guide"
-                    className={`absolute bottom-6 left-[10%] z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#aa5042] border border-[#D8BD8A] text-[#efefd1] text-sm font-bold shadow-lg hover:bg-[#c0604e] transition-colors transition-opacity ${
-                        isBlocked ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                >
-                    ?
-                </button>
-            )}
-            {/* Layer toggle */}
-            <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 transition-opacity ${isBlocked ? "opacity-50 pointer-events-none" : ""}`}>
-                <div className="flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
-                    <button
-                        onClick={() => setLayer("satellite")}
-                        className={`px-4 py-2 text-sm font-medium transition-colors ${
-                            layer === "satellite"
-                                ? "bg-[#D8BD8A] text-black"
-                                : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                        onClick={() => setShowGuide(true)}
+                        aria-label="Open guide"
+                        className={`absolute bottom-20 md:bottom-6 left-4 pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-[#aa5042] border border-[#D8BD8A] text-[#efefd1] text-sm font-bold shadow-lg hover:bg-[#c0604e] transition-colors transition-opacity ${
+                            isBlocked ? "opacity-50 pointer-events-none" : ""
                         }`}
                     >
-                        Satellite
+                        ?
                     </button>
-                    <button
-                        onClick={() => setLayer("street")}
-                        className={`px-4 py-2 text-sm font-medium transition-colors ${
-                            layer === "street"
-                                ? "bg-[#D8BD8A] text-black"
-                                : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
-                        }`}
-                    >
-                        Topo
-                    </button>
-                </div>
-                <div className="relative group">
-                    <button
-                        onClick={() => setShowBuildings((b) => !b)}
-                        disabled={mapZoom < BUILDING_MIN_ZOOM}
-                        className={`px-4 py-2 text-sm font-medium rounded shadow-lg border transition-colors ${
-                            mapZoom < BUILDING_MIN_ZOOM
-                                ? "bg-[#6b3d37] text-[#efefd1] opacity-50 border-[#D8BD8A] cursor-not-allowed"
-                                : showBuildings
-                                ? "bg-[#FF6B35] text-white border-[#FF6B35] hover:bg-[#e55a25]"
-                                : "bg-[#aa5042] text-[#efefd1] border-[#D8BD8A] hover:bg-[#c0604e]"
-                        }`}
-                    >
-                        Building Footprints
-                    </button>
-                    {mapZoom < BUILDING_MIN_ZOOM && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 text-center text-xs text-[#efefd1] bg-black bg-opacity-75 rounded px-2 py-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                            Zoom in further to enable building footprints
-                        </div>
-                    )}
+                )}
+                {/* Layer toggle */}
+                <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto flex items-center gap-2 md:gap-3 transition-opacity ${isBlocked ? "opacity-50 pointer-events-none" : ""}`}>
+                    <div className="flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
+                        <button
+                            onClick={() => setLayer("satellite")}
+                            className={`px-2 py-1 text-xs md:px-4 md:py-2 md:text-sm font-medium transition-colors ${
+                                layer === "satellite"
+                                    ? "bg-[#D8BD8A] text-black"
+                                    : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                            }`}
+                        >
+                            Satellite
+                        </button>
+                        <button
+                            onClick={() => setLayer("street")}
+                            className={`px-2 py-1 text-xs md:px-4 md:py-2 md:text-sm font-medium transition-colors ${
+                                layer === "street"
+                                    ? "bg-[#D8BD8A] text-black"
+                                    : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
+                            }`}
+                        >
+                            Topo
+                        </button>
+                    </div>
+                    <div className="relative group">
+                        <button
+                            onClick={() => setShowBuildings((b) => !b)}
+                            disabled={mapZoom < BUILDING_MIN_ZOOM}
+                            className={`px-2 py-1 text-xs md:px-4 md:py-2 md:text-sm font-medium rounded shadow-lg border transition-colors ${
+                                mapZoom < BUILDING_MIN_ZOOM
+                                    ? "bg-[#6b3d37] text-[#efefd1] opacity-50 border-[#D8BD8A] cursor-not-allowed"
+                                    : showBuildings
+                                    ? "bg-[#FF6B35] text-white border-[#FF6B35] hover:bg-[#e55a25]"
+                                    : "bg-[#aa5042] text-[#efefd1] border-[#D8BD8A] hover:bg-[#c0604e]"
+                            }`}
+                        >
+                            Building Footprints
+                        </button>
+                        {mapZoom < BUILDING_MIN_ZOOM && (
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 text-center text-xs text-[#efefd1] bg-black bg-opacity-75 rounded px-2 py-1 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+                                Zoom in further to enable building footprints
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             {showConfirm && selectedFips && (
