@@ -56,14 +56,14 @@ function StateCountySelector({
     const counties = selectedState ? (COUNTIES[selectedState] ?? []) : [];
 
     return (
-        <div className="bg-[#aa5042] p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4">
+        <div className="bg-[#aa5042] p-5 md:p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90dvh] overflow-y-auto">
             <h2 className="text-[#efefd1] text-2xl font-bold mb-1 text-center">
                 Select Your State & County
             </h2>
             <p className="text-[#efefd1] opacity-60 text-sm text-center mb-6">
                 Choose the area you want to analyze for fire risk.
             </p>
-            <div className="flex gap-6">
+            <div className="flex flex-col sm:flex-row gap-6">
                 {/* State list */}
                 <div className="flex-1">
                     <h3 className="text-[#d8bd8a] font-semibold mb-3 text-xs uppercase tracking-widest">

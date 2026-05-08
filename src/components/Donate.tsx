@@ -2,8 +2,8 @@ const VENMO_URL = "https://venmo.com/u/Jack-Lesemann"; // TODO: replace with you
 
 export default function Donate() {
     return (
-        <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
-            <h1 className="text-4xl font-bold text-[#efefd1] mb-4">
+        <div className="flex flex-col items-center justify-center py-12 md:py-24 px-4 text-center">
+            <h1 className="text-2xl md:text-4xl font-bold text-[#efefd1] mb-4">
                 Support Prefire
             </h1>
             <p className="text-[#efefd1] opacity-80 text-lg max-w-xl mb-2">

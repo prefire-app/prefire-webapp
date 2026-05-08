@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 function HomeCTA() {
   const navigate = useNavigate();
   return (
-    <div className="mx-auto max-w-md text-center lg:flex-auto lg:py-32 lg:text-center">
-      <h1 className="text-3xl font-bold mb-4 text-[#efefd1] mt-6">
+    <div className="mx-auto max-w-md px-4 text-center lg:flex-auto lg:py-32 lg:text-center">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-[#efefd1] mt-6">
         A Wildfire Defense Tool for the People
       </h1>
-      <p className="text-lg mb-8 text-pretty text-[#efefd1]">
+      <p className="text-base md:text-lg mb-8 text-pretty text-[#efefd1]">
         Providing a defensible space tool for all to save lives and property.
       </p>
       <div

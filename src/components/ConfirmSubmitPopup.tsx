@@ -24,7 +24,7 @@ function ConfirmSubmitPopup({
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-30">
-            <div className="bg-[#aa5042] p-6 rounded shadow-lg w-80">
+            <div className="bg-[#aa5042] p-6 rounded shadow-lg max-w-xs w-full mx-4">
                 {submitted ? (
                     <>
                         <p className="text-[#efefd1] mb-3 font-semibold">

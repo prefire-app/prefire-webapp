@@ -93,11 +93,11 @@ const pages: { title: string; content: React.ReactNode }[] = [
                             what you've outlined.
                         </p>
                     </div>
-                    <div className="h-28 flex items-center justify-center">
+                    <div className="h-44 flex items-center justify-center">
                         <img
                             src="/poly_tool.gif"
                             alt="Selecting the polygon tool and drawing a polygon on the map"
-                            className="w-1/2 h-full object-contain rounded-lg border border-[#D8BD8A] border-opacity-20"
+                            className="w-full h-full object-contain rounded-lg"
                         />
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
           };
 
     return (
-        <div className="bg-[#2a1a1a] border border-[#D8BD8A] rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col overflow-hidden">
+        <div className="bg-[#2a1a1a] border border-[#D8BD8A] rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 160px)" }}>
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D8BD8A] border-opacity-30">
                 <span className="text-[#D8BD8A] text-xs font-semibold uppercase tracking-widest">
@@ -202,7 +202,7 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
             </div>
 
             {/* Page content — grid-stack so container height = tallest page */}
-            <div className="px-5 pt-4 pb-4" style={{ display: "grid" }}>
+            <div className="px-5 pt-4 pb-4 overflow-y-auto" style={{ display: "grid" }}>
                 {pages.map((page, i) => (
                     <div
                         key={i}

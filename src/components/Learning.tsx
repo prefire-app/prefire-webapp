@@ -1,7 +1,7 @@
 export default function Learning() {
   return (
-    <div className="p-8 text-[#efefd1]">
-      <h1 className="text-4xl font-bold mb-4">Learning Resources</h1>
+    <div className="p-4 md:p-8 text-[#efefd1]">
+      <h1 className="text-2xl md:text-4xl font-bold mb-4">Learning Resources</h1>
       <p className="mb-6">
         Explore our curated resources to enhance your understanding of
         defensible space and wildfire preparedness.
