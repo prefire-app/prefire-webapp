@@ -1,5 +1,3 @@
-import matter from "gray-matter";
-
 // Eagerly load all markdown files from the posts directory at build time.
 // Vite resolves this glob statically — no dynamic imports at runtime.
 const rawFiles = import.meta.glob("../blog/posts/*.md", {
@@ -19,8 +17,26 @@ export interface Post extends PostMeta {
     content: string;      // raw markdown body (without frontmatter)
 }
 
+/**
+ * Minimal YAML frontmatter parser — handles simple key: value pairs only.
+ * Avoids gray-matter / js-yaml which require Buffer (Node.js only).
+ */
+function parseFrontmatter(raw: string): { data: Record<string, string>; content: string } {
+    const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+    if (!match) return { data: {}, content: raw };
+    const data: Record<string, string> = {};
+    for (const line of match[1].split(/\r?\n/)) {
+        const colon = line.indexOf(":");
+        if (colon === -1) continue;
+        const key = line.slice(0, colon).trim();
+        const value = line.slice(colon + 1).trim();
+        if (key) data[key] = value;
+    }
+    return { data, content: match[2] };
+}
+
 function parsePost(raw: string, filePath: string): Post {
-    const { data, content } = matter(raw);
+    const { data, content } = parseFrontmatter(raw);
     const slug =
         data.slug ||
         filePath
@@ -30,7 +46,7 @@ function parsePost(raw: string, filePath: string): Post {
     return {
         slug,
         title: data.title ?? "Untitled",
-        date: data.date ? String(data.date).slice(0, 10) : "",
+        date: data.date ?? "",
         description: data.description ?? "",
         content,
     };

@@ -10,6 +10,13 @@ Prefire helps property owners assess and improve their defensible space against 
 - /map: Interactive defensible space mapping tool (Leaflet-based satellite map with polygon drawing)
 - /learning: Curated wildfire preparedness and defensible space resources from CAL FIRE, NFPA, USFS, and Ready for Wildfire
 - /donate: Support the project via Venmo
+- /about: About Prefire — overview with links to all sub-pages
+- /about/mission: Why Prefire exists and the wildfire problem it addresses
+- /about/tool: How the defensible space analyzer works — tech stack (React, Leaflet, PMTiles, AWS CloudFront), polygon drawing, building footprint overlay
+- /about/methodology: How the defensible space score is calculated — Zone 1 (0-30ft) and Zone 2 (30-100ft) based on California PRC 4291 and NFPA 1144
+- /about/data: Data sources — ESRI satellite imagery, U.S. Census TIGERweb county boundaries, Microsoft Building Footprints (PMTiles), Nominatim geocoding
+- /about/me: About the developer — personal motivation and professional background
+- /about/contact: Contact Prefire via email (prefire@prefire.online)
 
 ## About
 
