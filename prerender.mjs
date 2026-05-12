@@ -34,6 +34,13 @@ const routes = [
     { url: "/learning", outFile: "dist/learning/index.html" },
     { url: "/donate", outFile: "dist/donate/index.html" },
     { url: "/blog", outFile: "dist/blog/index.html" },
+    { url: "/about", outFile: "dist/about/index.html" },
+    { url: "/about/tool", outFile: "dist/about/tool/index.html" },
+    { url: "/about/me", outFile: "dist/about/me/index.html" },
+    { url: "/about/mission", outFile: "dist/about/mission/index.html" },
+    { url: "/about/data", outFile: "dist/about/data/index.html" },
+    { url: "/about/methodology", outFile: "dist/about/methodology/index.html" },
+    { url: "/about/contact", outFile: "dist/about/contact/index.html" },
     ...blogPostRoutes,
 ];
 
