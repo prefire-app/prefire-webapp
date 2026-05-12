@@ -5,6 +5,8 @@ import NavBar from "../components/NavBar";
 import HomeHero from "../components/HomeHero";
 import Learning from "../components/Learning";
 import Donate from "../components/Donate";
+import Blog from "../components/Blog";
+import BlogPost from "../components/BlogPost";
 
 // Lazy-load the map so Leaflet (browser-only) is never evaluated during SSR
 const MappingTool = lazy(() => import("../components/MappingTool"));
@@ -32,6 +34,8 @@ function App() {
                         } />
                         <Route path="/learning" element={<Learning />} />
                         <Route path="/donate" element={<Donate />} />
+                        <Route path="/blog" element={<Blog />} />
+                        <Route path="/blog/:slug" element={<BlogPost />} />
                     </Routes>
                 </Suspense>
             </main>
