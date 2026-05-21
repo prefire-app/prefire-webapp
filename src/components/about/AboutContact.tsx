@@ -12,8 +12,7 @@ export default function AboutContact() {
 
             <h1 className="text-3xl md:text-5xl font-bold mb-4">Contact</h1>
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-10">
-                Questions, feedback, bug reports, or partnership inquiries — reach out
-                anytime. We read every message.
+                Questions, feedback, bug reports, or anything at all!
             </p>
 
             <div className="space-y-6">
@@ -22,8 +21,8 @@ export default function AboutContact() {
                         Email
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
-                        The best way to reach us is by email. We'll get back to you as
-                        quickly as we can.
+                        The best way to reach me is by email. I'll get back to you as
+                        quickly as I can.
                     </p>
                     <a
                         href="mailto:prefire@prefire.online"
@@ -38,10 +37,16 @@ export default function AboutContact() {
                         Feedback & Bug Reports
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        Found a bug in the analyzer? Noticed missing data for your county?
-                        Have a suggestion for improving the methodology? Email us with as
-                        much detail as you can — screenshots and addresses are always
-                        helpful.
+                        Found a bug in the{" "}
+                        <Link
+                            to="/map"
+                            className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                        >
+                            analyzer
+                        </Link>
+                        ? Noticed missing data for your county? Have a suggestion for
+                        improving the methodology? Email me with as much detail as you
+                        can (screenshots and addresses are always helpful).
                     </p>
                 </div>
 
@@ -51,9 +56,15 @@ export default function AboutContact() {
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
                         If you work in fire science, land management, or geospatial research
-                        and think Prefire could be useful to your work — or if you have
-                        datasets that could improve our coverage — we'd love to hear from
-                        you.
+                        and think Prefire could be useful to your work or if you have
+                        datasets that could improve our{" "}
+                        <Link
+                            to="/about/data"
+                            className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                        >
+                            coverage
+                        </Link>
+                        {" "}— we'd love to hear from you.
                     </p>
                 </div>
             </div>

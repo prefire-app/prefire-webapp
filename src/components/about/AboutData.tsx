@@ -98,6 +98,27 @@ export default function AboutData() {
                     is available.
                 </p>
             </div>
+
+            <div className="mt-6 flex flex-wrap gap-4">
+                <Link
+                    to="/about/tool"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    How the tool uses this data →
+                </Link>
+                <Link
+                    to="/about/methodology"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    How the score is calculated →
+                </Link>
+                <Link
+                    to="/about/contact"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    Have a dataset to share? →
+                </Link>
+            </div>
         </div>
     );
 }

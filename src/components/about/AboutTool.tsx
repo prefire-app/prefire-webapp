@@ -13,8 +13,8 @@ export default function AboutTool() {
             <h1 className="text-3xl md:text-5xl font-bold mb-4">The Analyzer</h1>
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-10">
                 The Prefire Defensible Space Analyzer combines interactive mapping,
-                satellite imagery, and a property questionnaire to estimate how well a
-                home's surroundings comply with California fire-safe regulations.
+                satellite imagery, and a property questionnaire (coming soon) to estimate how well a
+                home's surroundings comply with various fire-safe regulations.
             </p>
 
             <div className="space-y-6">
@@ -23,7 +23,18 @@ export default function AboutTool() {
                         What It Does
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        
+                        Prefire gives homeowners a free, self-service way to assess their
+                        property's wildfire risk. Users navigate to their property on a
+                        satellite map, draw polygons around their structures, and complete a
+                        short questionnaire about their site conditions. That data is fed into
+                        a model that estimates defensible space compliance and produces a
+                        personalized report with actionable recommendations.{" "}
+                        <Link
+                            to="/about/methodology"
+                            className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                        >
+                            How the score is calculated →
+                        </Link>
                     </p>
                 </div>
 
@@ -34,11 +45,7 @@ export default function AboutTool() {
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
                         The map is built on{" "}
                         <span className="text-[#D8BD8A] font-medium">Leaflet</span>, an
-                        open-source JavaScript mapping library, with two tile sources
-                        available: ESRI World Imagery for satellite view and ESRI World Topo
-                        for street view. Polygon drawing is handled by{" "}
-                        <span className="text-[#D8BD8A] font-medium">Leaflet Draw</span>,
-                        which lets users outline structures with precision.
+                        open-source JavaScript mapping library.
                     </p>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
                         County boundaries are fetched in real time from the{" "}
@@ -91,26 +98,15 @@ export default function AboutTool() {
                         </li>
                     </ul>
                 </div>
-
-                <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
-                    <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
-                        Design Decisions
-                    </h2>
-                    <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
-                        The map tool is intentionally excluded from pre-rendering because
-                        Leaflet requires a real browser DOM. All other pages are pre-rendered
-                        at build time to static HTML so search engines can index content
-                        without executing JavaScript.
-                    </p>
-                    <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        Building footprint tiles are loaded on demand only when the user
-                        enables the overlay and zooms in past a threshold — keeping initial
-                        load fast and bandwidth usage low for users who don't need the layer.
-                    </p>
-                </div>
             </div>
 
-            <div className="mt-8 flex gap-4">
+            <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                    to="/map"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    Try the analyzer →
+                </Link>
                 <Link
                     to="/about/methodology"
                     className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
