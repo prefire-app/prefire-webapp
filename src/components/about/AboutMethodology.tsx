@@ -12,7 +12,7 @@ export default function AboutMethodology() {
 
             <h1 className="text-3xl md:text-5xl font-bold mb-4">Methodology</h1>
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-2">
-                Our defensible space assessment is based on California's fire-safe
+                Our defensible space assessment is based on CAL FIRE
                 regulations and NFPA 1144 standards. The scoring methodology is actively
                 being developed and refined as we gather more data and feedback.
             </p>
@@ -28,16 +28,36 @@ export default function AboutMethodology() {
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
                         California law (PRC § 4291) defines two primary defensible space
                         zones around structures. Our assessment evaluates compliance with
-                        both:
+                        both. For a deeper primer on what defensible space is and why it
+                        matters, see the{" "}
+                        <Link
+                            to="/learning"
+                            className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                        >
+                            learning resources
+                        </Link>.
                     </p>
                     <ul className="space-y-3">
                         <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
                             <span className="text-[#D8BD8A] font-semibold text-sm">
-                                Zone 1 — Lean, Clean & Green (0–30 ft)
+                                Zone 0 — (0–5 ft)
                             </span>
                             <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed mt-1">
-                                The highest-priority zone immediately surrounding your home.
-                                Vegetation must be well-irrigated and spaced to prevent fire
+                                The area immediately adjacent to the structure. California AB
+                                3074 (2021) established this zone, requiring all combustible
+                                materials to be removed including mulch, wood debris, and
+                                vegetation. Non-combustible hardscaping and ember-resistant
+                                vents are key here. This zone directly determines whether
+                                embers landing near your home ignite it.
+                            </p>
+                        </li>
+                        <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
+                            <span className="text-[#D8BD8A] font-semibold text-sm">
+                                Zone 1 — Lean, Clean & Green (5–30 ft)
+                            </span>
+                            <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed mt-1">
+                                The highest-priority vegetation zone surrounding your home.
+                                Plants must be well-irrigated and spaced to prevent fire
                                 from reaching the structure. Dead plants, dry leaves, and wood
                                 piles must be removed. This zone has the most direct impact on
                                 whether a home survives a wildfire.
@@ -63,16 +83,23 @@ export default function AboutMethodology() {
                         Inputs to the Assessment
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
-                        The analysis draws from three sources of information:
+                        The analysis draws from three sources of information. For technical
+                        details on how each is collected and delivered, see{" "}
+                        <Link
+                            to="/about/data"
+                            className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                        >
+                            Data Sources
+                        </Link>.
                     </p>
                     <ul className="text-[#efefd1] text-sm opacity-80 leading-relaxed space-y-2 list-disc list-inside">
                         <li>
                             <span className="text-[#D8BD8A] font-medium">User-drawn polygons</span>{" "}
                             — the geometry you draw around your structures establishes the
-                            footprint from which Zone 1 and Zone 2 boundaries are computed
+                            footprint from which the zone boundaries are computed
                         </li>
                         <li>
-                            <span className="text-[#D8BD8A] font-medium">Property questionnaire</span>{" "}
+                            <span className="text-[#D8BD8A] font-medium">Property questionnaire (Coming SOON) </span>{" "}
                             — answers about vegetation type and density, roof and siding
                             materials, slope, access road width, and other site-specific
                             factors that can't be derived from aerial data alone
@@ -90,7 +117,7 @@ export default function AboutMethodology() {
                         What the Score Means
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        The score is a relative compliance estimate — not a formal
+                        The score is a relative compliance estimate and not a formal
                         inspection result, legal certification, or insurance determination.
                         It is designed to identify which aspects of your property most need
                         attention and prioritize the highest-impact improvements. Always
@@ -117,6 +144,21 @@ export default function AboutMethodology() {
                         Get in touch →
                     </Link>
                 </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                    to="/map"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    Try the analyzer →
+                </Link>
+                <Link
+                    to="/about/tool"
+                    className="text-[#D8BD8A] text-sm underline hover:opacity-70 transition-opacity"
+                >
+                    How the tool was built →
+                </Link>
             </div>
         </div>
     );

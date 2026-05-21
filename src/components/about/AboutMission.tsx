@@ -76,7 +76,7 @@ export default function AboutMission() {
                         publicly by the USDA, USGS, CAL FIRE, and other state and federal agencies.
                         Privately acquired satellite imagery is out of reach financially, so the
                         tool uses what is available. Hosting the site, the analyzer, and the large
-                        geospatial datasets involved carries a real cost — which is why the tool is
+                        geospatial datasets involved carries a real cost which is why the tool is
                         currently available only in select communities. Expanded coverage means
                         expanded cost. I am actively pursuing grant funding to reach more
                         communities.
