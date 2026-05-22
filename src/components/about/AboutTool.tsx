@@ -40,6 +40,62 @@ export default function AboutTool() {
 
                 <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
                     <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
+                        The ML Pipeline
+                    </h2>
+                    <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
+                        When you submit your drawn polygon, it triggers an inference
+                        pipeline running on AWS Lambda. The stages run in sequence:
+                    </p>
+                    <ol className="text-[#efefd1] text-sm opacity-80 leading-relaxed space-y-2 list-decimal list-inside">
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Tree crown detection</span>{" "}
+                            — two detectors run in parallel:{" "}
+                            <span className="text-[#D8BD8A] font-medium">DeepForest</span>, an
+                            object detection model trained on aerial RGB imagery, and an{" "}
+                            <span className="text-[#D8BD8A] font-medium">NDVI + watershed</span>{" "}
+                            segmentation approach using the near-infrared band from NAIP
+                            imagery. Detections from both are merged and deduplicated by
+                            overlap ratio.
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Mask refinement</span>{" "}
+                            — each surviving detection is passed to{" "}
+                            <span className="text-[#D8BD8A] font-medium">SAM 2</span>{" "}
+                            (Segment Anything Model 2), which replaces the rough bounding
+                            box with a precise pixel-level crown mask.
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Slope extraction</span>{" "}
+                            — a slope raster is derived from{" "}
+                            <span className="text-[#D8BD8A] font-medium">USGS 3DEP</span>{" "}
+                            elevation data. The slope at each crown's centroid determines
+                            which CAL FIRE horizontal spacing rule applies to that tree.
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Zone analysis</span>{" "}
+                            — each crown is compared against the defensible space zone
+                            buffers computed from your drawn structure polygon. Trees
+                            touching the structure or violating spacing requirements are
+                            flagged.
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Risk scoring</span>{" "}
+                            — flagged crowns, questionnaire answers, and your property's{" "}
+                            <span className="text-[#D8BD8A] font-medium">Fire Hazard Severity
+                            Zone (FHSZ)</span>{" "}
+                            class are combined into a final score.{" "}
+                            <Link
+                                to="/about/methodology"
+                                className="text-[#D8BD8A] underline hover:opacity-70 transition-opacity"
+                            >
+                                How the score is calculated →
+                            </Link>
+                        </li>
+                    </ol>
+                </div>
+
+                <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
+                    <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
                         The Mapping Layer
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
@@ -91,6 +147,20 @@ export default function AboutTool() {
                             <span className="text-[#D8BD8A] font-medium">Hosting:</span> Static
                             site deployed to Amazon S3 + CloudFront CDN with pre-rendered HTML
                             for SEO
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Backend:</span>{" "}
+                            Python on AWS Lambda — separate functions for geocoding,
+                            inference, scoring, and job management
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">ML models:</span>{" "}
+                            DeepForest (tree detection), NDVI + watershed segmentation,
+                            SAM 2 (mask refinement)
+                        </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Imagery:</span>{" "}
+                            NAIP aerial imagery (USDA), 3DEP elevation data (USGS)
                         </li>
                         <li>
                             <span className="text-[#D8BD8A] font-medium">Address search:</span>{" "}
