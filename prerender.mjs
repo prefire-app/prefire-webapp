@@ -9,15 +9,39 @@ import { fileURLToPath } from "node:url";
 import { build } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import matter from "gray-matter";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const toAbsolute = (p) => path.resolve(__dirname, p);
+
+// Discover blog post slugs from markdown frontmatter.
+const postsDir = toAbsolute("src/blog/posts");
+const blogPostRoutes = fs.existsSync(postsDir)
+    ? fs
+          .readdirSync(postsDir)
+          .filter((f) => f.endsWith(".md"))
+          .map((f) => {
+              const raw = fs.readFileSync(path.join(postsDir, f), "utf-8");
+              const { data } = matter(raw);
+              const slug = data.slug || f.replace(/\.md$/, "");
+              return { url: `/blog/${slug}`, outFile: `dist/blog/${slug}/index.html` };
+          })
+    : [];
 
 // Routes to pre-render. /map is excluded — it's Leaflet-heavy with no crawlable text.
 const routes = [
     { url: "/", outFile: "dist/index.html" },
     { url: "/learning", outFile: "dist/learning/index.html" },
     { url: "/donate", outFile: "dist/donate/index.html" },
+    { url: "/blog", outFile: "dist/blog/index.html" },
+    { url: "/about", outFile: "dist/about/index.html" },
+    { url: "/about/tool", outFile: "dist/about/tool/index.html" },
+    { url: "/about/me", outFile: "dist/about/me/index.html" },
+    { url: "/about/mission", outFile: "dist/about/mission/index.html" },
+    { url: "/about/data", outFile: "dist/about/data/index.html" },
+    { url: "/about/methodology", outFile: "dist/about/methodology/index.html" },
+    { url: "/about/contact", outFile: "dist/about/contact/index.html" },
+    ...blogPostRoutes,
 ];
 
 // Step 1: Build the SSR bundle
