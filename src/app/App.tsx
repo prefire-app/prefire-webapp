@@ -5,6 +5,15 @@ import NavBar from "../components/NavBar";
 import HomeHero from "../components/HomeHero";
 import Learning from "../components/Learning";
 import Donate from "../components/Donate";
+import Blog from "../components/Blog";
+import BlogPost from "../components/BlogPost";
+import About from "../components/about/About";
+import AboutTool from "../components/about/AboutTool";
+import AboutMe from "../components/about/AboutMe";
+import AboutMission from "../components/about/AboutMission";
+import AboutData from "../components/about/AboutData";
+import AboutMethodology from "../components/about/AboutMethodology";
+import AboutContact from "../components/about/AboutContact";
 
 // Lazy-load the map so Leaflet (browser-only) is never evaluated during SSR
 const MappingTool = lazy(() => import("../components/MappingTool"));
@@ -32,6 +41,15 @@ function App() {
                         } />
                         <Route path="/learning" element={<Learning />} />
                         <Route path="/donate" element={<Donate />} />
+                        <Route path="/blog" element={<Blog />} />
+                        <Route path="/blog/:slug" element={<BlogPost />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/about/tool" element={<AboutTool />} />
+                        <Route path="/about/me" element={<AboutMe />} />
+                        <Route path="/about/mission" element={<AboutMission />} />
+                        <Route path="/about/data" element={<AboutData />} />
+                        <Route path="/about/methodology" element={<AboutMethodology />} />
+                        <Route path="/about/contact" element={<AboutContact />} />
                     </Routes>
                 </Suspense>
             </main>
