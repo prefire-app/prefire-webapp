@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { QuestionnaireAnswers } from "../types/questionnaire";
 
 const API_URL = import.meta.env.NODE_ENV === "local" ? "http://127.0.0.1:8000/send-geometry"
     : "https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com/send-geometry";
@@ -9,10 +10,12 @@ function ConfirmSubmitPopup({
     drawnPolygons,
     onClose,
     fips,
+    questionnaire,
 }: {
     drawnPolygons: any[];
     onClose: () => void;
     fips: string;
+    questionnaire?: QuestionnaireAnswers | null;
 }) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
@@ -94,6 +97,7 @@ function ConfirmSubmitPopup({
                                             geometry: drawnPolygons.map(
                                                 (p) => p.geometry,
                                             ),
+                                            ...(questionnaire != null && { questionnaire }),
                                         });
                                         setSubmitted(true);
                                     } catch (error) {
