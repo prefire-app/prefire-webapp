@@ -109,7 +109,98 @@ export default function AboutMethodology() {
                             — known structure outlines used to cross-check drawn polygons and
                             identify any unclaimed structures on the parcel
                         </li>
+                        <li>
+                            <span className="text-[#D8BD8A] font-medium">Historical and regional data</span>{" "}
+                            — as of now, we use the CAL FIRE Fire Hazard Severity Zone map to set a baseline risk level for
+                            your area. We are actively working to incorporate other local data.
+                        </li>
                     </ul>
+                </div>
+                <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
+                    <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
+                        How the Score Is Calculated
+                    </h2>
+                    <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-4">
+                        The overall risk score runs from 0 to 100. A higher score means
+                        higher risk. It is the sum of four components, each capped
+                        independently:
+                    </p>
+                    <ul className="space-y-2 mb-4">
+                        <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[#D8BD8A] font-semibold text-sm">ML tree analysis</span>
+                                <span className="text-[#D8BD8A] text-xs font-mono">up to 35 pts</span>
+                            </div>
+                            <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed">
+                                Points are added for trees physically touching your structure
+                                (13 pts each) and for spacing violations in each zone. This is
+                                the strongest individual predictor of structure loss in a
+                                wildfire, based on research across San Diego County fires
+                                2001–2010.
+                            </p>
+                        </li>
+                        <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[#D8BD8A] font-semibold text-sm">Zone 0 questionnaire</span>
+                                <span className="text-[#D8BD8A] text-xs font-mono">up to 30 pts</span>
+                            </div>
+                            <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed">
+                                Questions about roof material, siding, firewood storage,
+                                mulch, and debris within the immediate 5-foot ember zone.
+                            </p>
+                        </li>
+                        <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[#D8BD8A] font-semibold text-sm">Zone 1 questionnaire</span>
+                                <span className="text-[#D8BD8A] text-xs font-mono">up to 20 pts</span>
+                            </div>
+                            <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed">
+                                Questions about foliage health and ladder fuels in the
+                                5–30 ft zone.
+                            </p>
+                        </li>
+                        <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
+                            <div className="flex justify-between items-center mb-1">
+                                <span className="text-[#D8BD8A] font-semibold text-sm">Fire Hazard Severity Zone (FHSZ)</span>
+                                <span className="text-[#D8BD8A] text-xs font-mono">up to 15 pts</span>
+                            </div>
+                            <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed">
+                                A community-level context multiplier based on the CAL FIRE
+                                FHSZ classification for your area — Very High (15 pts),
+                                High (8 pts), or Moderate (5 pts).
+                            </p>
+                        </li>
+                    </ul>
+                    <p className="text-[#efefd1] text-xs opacity-60 leading-relaxed">
+                        Zone 2 questionnaire answers are scored and shown in the per-zone
+                        report cards but do not contribute to the overall score — research
+                        does not support individual-structure protection benefits beyond
+                        30 ft.
+                    </p>
+                </div>
+
+                <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
+                    <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
+                        Rating Bands
+                    </h2>
+                    <ul className="space-y-2">
+                        {[
+                            { label: "Very High", range: "75 – 100", color: "text-red-400" },
+                            { label: "High",      range: "50 – 74",  color: "text-orange-400" },
+                            { label: "Medium",    range: "25 – 49",  color: "text-yellow-400" },
+                            { label: "Low",       range: "0 – 24",   color: "text-green-400" },
+                        ].map(({ label, range, color }) => (
+                            <li key={label} className="flex justify-between items-center border border-[#D8BD8A] border-opacity-20 rounded-lg px-4 py-2">
+                                <span className={`font-semibold text-sm ${color}`}>{label}</span>
+                                <span className="text-[#efefd1] text-xs opacity-60 font-mono">{range}</span>
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="text-[#efefd1] text-xs opacity-60 leading-relaxed mt-3">
+                        If any tree is detected touching your structure, the score is
+                        raised to at least 25 regardless of other factors, guaranteeing
+                        a minimum Medium rating.
+                    </p>
                 </div>
 
                 <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
@@ -117,9 +208,9 @@ export default function AboutMethodology() {
                         What the Score Means
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        The score is a relative compliance estimate and not a formal
-                        inspection result, legal certification, or insurance determination.
-                        It is designed to identify which aspects of your property most need
+                        The score is a relative risk estimate and is not a formal inspection
+                        result, legal certification, or insurance determination. It is
+                        designed to identify which aspects of your property most need
                         attention and prioritize the highest-impact improvements. Always
                         consult your local fire agency for authoritative guidance.
                     </p>
@@ -130,10 +221,7 @@ export default function AboutMethodology() {
                         Actively Evolving
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed">
-                        The scoring algorithm is under active development. We are currently
-                        working to incorporate satellite-derived vegetation density
-                        (NDVI/canopy cover) and historical fire perimeter data to make the
-                        assessment more accurate and data-driven. If you have feedback on the
+                        The scoring algorithm is under active development. If you have feedback on the
                         methodology or access to relevant datasets, we'd love to hear from
                         you.
                     </p>
