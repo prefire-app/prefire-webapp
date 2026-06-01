@@ -1,41 +1,8 @@
 import { useState } from "react";
+import { STATES, COUNTIES } from "../lib/geo";
 
 const UNAVAILABLE_MSG =
     "Sorry, we are working to expand to more states and counties.";
-
-const STATES = [
-    { name: "California", code: "CA", fips: "06", available: true },
-    { name: "Oregon", code: "OR", fips: "41", available: false },
-    { name: "Washington", code: "WA", fips: "53", available: false },
-    { name: "Idaho", code: "ID", fips: "16", available: false },
-    { name: "Montana", code: "MT", fips: "30", available: false },
-    { name: "Wyoming", code: "WY", fips: "56", available: false },
-    { name: "Colorado", code: "CO", fips: "08", available: false },
-    { name: "Utah", code: "UT", fips: "49", available: false },
-    { name: "Arizona", code: "AZ", fips: "04", available: false },
-    { name: "New Mexico", code: "NM", fips: "35", available: false },
-];
-
-const COUNTIES: Record<
-    string,
-    { name: string; fips: string; centroid: [number, number] }[]
-> = {
-    CA: [
-        { name: "Alameda", fips: "001", centroid: [37.6483, -121.892] },
-        { name: "Contra Costa", fips: "013", centroid: [37.9161, -121.9] },
-        { name: "El Dorado", fips: "017", centroid: [38.6872, -120.54] },
-        { name: "Los Angeles", fips: "037", centroid: [34.3073, -118.227] },
-        { name: "Marin", fips: "041", centroid: [38.084, -122.734] },
-        { name: "Nevada", fips: "057", centroid: [39.304, -120.778] },
-        { name: "Orange", fips: "059", centroid: [33.717, -117.831] },
-        { name: "Placer", fips: "061", centroid: [39.092, -120.804] },
-        { name: "San Diego", fips: "073", centroid: [33.028, -116.735] },
-        { name: "San Mateo", fips: "081", centroid: [37.434, -122.344] },
-        { name: "Santa Clara", fips: "085", centroid: [37.233, -121.696] },
-        { name: "Santa Cruz", fips: "087", centroid: [37.046, -122.023] },
-        { name: "Sonoma", fips: "097", centroid: [38.528, -122.928] },
-    ],
-};
 
 function StateCountySelector({
     onConfirm,

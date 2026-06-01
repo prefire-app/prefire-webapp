@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
-
-const EXTERNAL_LINK = "text-[#D8BD8A] underline hover:opacity-70 transition-opacity";
-const INTERNAL_LINK = "text-[#D8BD8A] underline hover:opacity-70 transition-opacity";
+import { EXTERNAL_LINK, INTERNAL_LINK } from "../../lib/styles";
 
 export default function LearningCalifornia() {
     return (
