@@ -14,6 +14,7 @@ import AboutMission from "../components/about/AboutMission";
 import AboutData from "../components/about/AboutData";
 import AboutMethodology from "../components/about/AboutMethodology";
 import AboutContact from "../components/about/AboutContact";
+import LearningCalifornia from "../components/learning/LearningCalifornia";
 
 // Lazy-load the map so Leaflet (browser-only) is never evaluated during SSR
 const MappingTool = lazy(() => import("../components/MappingTool"));
@@ -40,6 +41,7 @@ function App() {
                             </div>
                         } />
                         <Route path="/learning" element={<Learning />} />
+                        <Route path="/learning/california" element={<LearningCalifornia />} />
                         <Route path="/donate" element={<Donate />} />
                         <Route path="/blog" element={<Blog />} />
                         <Route path="/blog/:slug" element={<BlogPost />} />

@@ -9,7 +9,9 @@ import "leaflet-draw";
 import AddressSearchPopup from "./AddressSearchPopup";
 import AnalyzerGuide from "./AnalyzerGuide";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
+import QuestionnairePopup from "./QuestionnairePopup";
 import StateCountySelector from "./StateCountySelector";
+import type { QuestionnaireAnswers } from "../types/questionnaire";
 
 const TIGERWEB_URL =
     "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";
@@ -181,11 +183,13 @@ export default function MappingTool() {
     const [mapCenter, setMapCenter] = useState<[number, number]>(center);
     const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+    const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswers | null>(null);
     const [layer, setLayer] = useState<"satellite" | "street">("satellite");
     const [showBuildings, setShowBuildings] = useState(false);
     const [mapZoom, setMapZoom] = useState(10);
 
-    const isBlocked = showGuide || showSelector || showModal;
+    const isBlocked = showGuide || showSelector || showModal || showQuestionnaire;
 
     const clearDrawnLayers = useRef<() => void>(() => {});
 
@@ -237,7 +241,7 @@ export default function MappingTool() {
                     />
                 )}
             </MapContainer>
-            {(showGuide || showSelector || showModal) && (
+            {(showGuide || showSelector || showModal || showQuestionnaire) && (
                 <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
             )}
             {showGuide && (
@@ -288,7 +292,7 @@ export default function MappingTool() {
                             drawn
                         </span>
                         <button
-                            onClick={() => setShowConfirm(true)}
+                            onClick={() => setShowQuestionnaire(true)}
                             className="bg-[#D8BD8A] text-black text-sm font-semibold px-3 py-1 rounded hover:bg-[#c9ae7a] transition-colors"
                         >
                             Done?
@@ -362,11 +366,23 @@ export default function MappingTool() {
                     </div>
                 </div>
             </div>
+            {showQuestionnaire && (
+                <div className="fixed inset-0 flex items-center justify-center z-20">
+                    <QuestionnairePopup
+                        onComplete={(answers) => {
+                            setQuestionnaireAnswers(answers);
+                            setShowQuestionnaire(false);
+                            setShowConfirm(true);
+                        }}
+                    />
+                </div>
+            )}
             {showConfirm && selectedFips && (
                 <ConfirmSubmitPopup
                     drawnPolygons={drawnPolygons}
                     onClose={() => setShowConfirm(false)}
                     fips={selectedFips}
+                    questionnaire={questionnaireAnswers}
                 />
             )}
         </div>
