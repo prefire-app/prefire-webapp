@@ -12,9 +12,7 @@ import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
 import QuestionnairePopup from "./QuestionnairePopup";
 import StateCountySelector from "./StateCountySelector";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
-
-const TIGERWEB_URL =
-    "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";
+import { TIGERWEB_URL, PMTILES_URL, BUILDING_MIN_ZOOM, CA_CENTER } from "../lib/constants";
 
 function CountyBoundary({
     stateFips,
@@ -66,10 +64,6 @@ function CountyBoundary({
     return null;
 }
 
-const PMTILES_URL =
-    "https://prefire-dev-data.s3.us-east-1.amazonaws.com/pmtiles/buildings-ca.pmtiles";
-const BUILDING_MIN_ZOOM = 12;
-
 function PMTilesBuildingsLayer({ visible }: { visible: boolean }) {
     const map = useMap();
     const layerRef = useRef<any>(null);
@@ -117,8 +111,6 @@ function ZoomTracker({
     }, [map, onZoomChange]);
     return null;
 }
-
-const center: [number, number] = [36.7783, -119.4179]; // California fallback
 
 function LeafletDrawControls({
     onPolygonDrawn,
@@ -180,7 +172,7 @@ export default function MappingTool() {
     const [selectedStateFips, setSelectedStateFips] = useState<string | null>(
         null,
     );
-    const [mapCenter, setMapCenter] = useState<[number, number]>(center);
+    const [mapCenter, setMapCenter] = useState<[number, number]>(CA_CENTER);
     const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);

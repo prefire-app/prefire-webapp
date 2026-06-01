@@ -2,9 +2,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
-
-const API_URL = import.meta.env.NODE_ENV === "local" ? "http://127.0.0.1:8000/send-geometry"
-    : "https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com/send-geometry";
+import { API_URL } from "../lib/constants";
 
 function ConfirmSubmitPopup({
     drawnPolygons,
