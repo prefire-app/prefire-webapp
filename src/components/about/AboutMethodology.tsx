@@ -14,7 +14,7 @@ export default function AboutMethodology() {
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-2">
                 Our defensible space assessment is based on CAL FIRE
                 regulations and NFPA 1144 standards. The scoring methodology is actively
-                being developed and refined as we gather more data and feedback.
+                being developed and refined as we gather more data and feedback. Much of the project is also based on the research done by Syphard et al. (2014).
             </p>
             <p className="text-[#efefd1] opacity-50 text-sm mb-10">
                 Last updated May 2026
