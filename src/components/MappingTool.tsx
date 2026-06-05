@@ -12,46 +12,25 @@ import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
 import QuestionnairePopup from "./QuestionnairePopup";
 import StateCountySelector from "./StateCountySelector";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
-import { TIGERWEB_URL, PMTILES_URL, BUILDING_MIN_ZOOM, CA_CENTER } from "../lib/constants";
+import { TIGERWEB_URL, PMTILES_BASE_URL, BUILDING_MIN_ZOOM, CA_CENTER, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION } from "../lib/constants";
+import { STATES } from "../lib/geo";
 
-function CountyBoundary({
-    stateFips,
-    countyFips,
-}: {
-    stateFips: string;
-    countyFips: string;
-}) {
+function CountyBoundary({ geojson }: { geojson: any }) {
     const map = useMap();
     const layerRef = useRef<L.GeoJSON | null>(null);
 
     useEffect(() => {
-        const params = new URLSearchParams({
-            where: `STATE='${stateFips}' AND COUNTY='${countyFips}'`,
-            outFields: "NAME",
-            geometryPrecision: "5",
-            f: "geojson",
-            outSR: "4326",
-        });
+        if (!geojson) return;
 
-        fetch(`${TIGERWEB_URL}?${params}`)
-            .then((res) => res.json())
-            .then((data) => {
-                if (layerRef.current) {
-                    map.removeLayer(layerRef.current);
-                }
-                layerRef.current = L.geoJSON(data, {
-                    style: {
-                        color: "#D8BD8A",
-                        weight: 2.5,
-                        fillColor: "#D8BD8A",
-                        fillOpacity: 0.08,
-                    },
-                });
-                layerRef.current.addTo(map);
-            })
-            .catch(() => {
-                // silently fail — outline is decorative
-            });
+        layerRef.current = L.geoJSON(geojson, {
+            style: {
+                color: "#D8BD8A",
+                weight: 2.5,
+                fillColor: "#D8BD8A",
+                fillOpacity: 0.08,
+            },
+        });
+        layerRef.current.addTo(map);
 
         return () => {
             if (layerRef.current) {
@@ -59,34 +38,42 @@ function CountyBoundary({
                 layerRef.current = null;
             }
         };
-    }, [map, stateFips, countyFips]);
+    }, [map, geojson]);
 
     return null;
 }
 
-function PMTilesBuildingsLayer({ visible }: { visible: boolean }) {
+function PMTilesBuildingsLayer({
+    stateFips,
+    visible,
+}: {
+    stateFips: string | null;
+    visible: boolean;
+}) {
     const map = useMap();
     const layerRef = useRef<any>(null);
 
     useEffect(() => {
-        if (visible) {
-            layerRef.current = leafletLayer({
-                url: PMTILES_URL,
-                maxDataZoom: 16,
-                paintRules: [
-                    {
-                        dataLayer: "buildings",
-                        symbolizer: new PolygonSymbolizer({
-                            fill: "rgba(255, 107, 53, 0.15)",
-                            stroke: "#FF6B35",
-                            width: 1.5,
-                        }),
-                    },
-                ],
-                labelRules: [],
-            });
-            layerRef.current.addTo(map);
-        }
+        if (!visible || !stateFips) return;
+
+        const url = `${PMTILES_BASE_URL}${stateFips}.pmtiles`;
+
+        layerRef.current = leafletLayer({
+            url,
+            maxDataZoom: 15,
+            paintRules: [
+                {
+                    dataLayer: "buildings",
+                    symbolizer: new PolygonSymbolizer({
+                        fill: "rgba(255, 107, 53, 0.15)",
+                        stroke: "#FF6B35",
+                        width: 1.5,
+                    }),
+                },
+            ],
+            labelRules: [],
+        });
+        layerRef.current.addTo(map);
 
         return () => {
             if (layerRef.current) {
@@ -94,7 +81,7 @@ function PMTilesBuildingsLayer({ visible }: { visible: boolean }) {
                 layerRef.current = null;
             }
         };
-    }, [map, visible]);
+    }, [map, visible, stateFips]);
 
     return null;
 }
@@ -172,13 +159,17 @@ export default function MappingTool() {
     const [selectedStateFips, setSelectedStateFips] = useState<string | null>(
         null,
     );
+    const [selectedStateCode, setSelectedStateCode] = useState<string | null>(null);
+    const [countyGeoJSON, setCountyGeoJSON] = useState<any>(null);
+    const [geometryLoading, setGeometryLoading] = useState(false);
     const [mapCenter, setMapCenter] = useState<[number, number]>(CA_CENTER);
     const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
     const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswers | null>(null);
-    const [layer, setLayer] = useState<"satellite" | "street">("satellite");
+    const [layer, setLayer] = useState<"mapbox" | "esri" | "topo">("mapbox");
     const [showBuildings, setShowBuildings] = useState(false);
+    const [showDataNote, setShowDataNote] = useState(true);
     const [mapZoom, setMapZoom] = useState(10);
 
     const isBlocked = showGuide || showSelector || showModal || showQuestionnaire;
@@ -206,31 +197,49 @@ export default function MappingTool() {
                 ref={mapRef}
                 whenReady={() => {}}
             >
-                {layer === "satellite" ? (
+                {layer === "mapbox" && MAPBOX_SATELLITE_URL ? (
                     <TileLayer
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                        maxNativeZoom={19}
+                        url={MAPBOX_SATELLITE_URL}
+                        attribution={MAPBOX_ATTRIBUTION}
+                        tileSize={512}
+                        zoomOffset={-1}
+                        maxNativeZoom={22}
                         maxZoom={22}
                     />
+                ) : layer === "topo" ? (
+                    MAPBOX_STREETS_URL ? (
+                        <TileLayer
+                            url={MAPBOX_STREETS_URL}
+                            attribution={MAPBOX_ATTRIBUTION}
+                            tileSize={512}
+                            zoomOffset={-1}
+                            maxNativeZoom={22}
+                            maxZoom={22}
+                        />
+                    ) : (
+                        <TileLayer
+                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                            attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+                            maxNativeZoom={19}
+                            maxZoom={22}
+                        />
+                    )
                 ) : (
                     <TileLayer
-                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-                        attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+                        url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                        attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
                         maxNativeZoom={19}
                         maxZoom={22}
                     />
                 )}
-                <PMTilesBuildingsLayer visible={showBuildings} />
+                <PMTilesBuildingsLayer stateFips={selectedStateFips} visible={showBuildings} />
                 <ZoomTracker onZoomChange={setMapZoom} />
                 <LeafletDrawControls
                     onPolygonDrawn={handlePolygonDrawn}
                     onClearRef={(fn) => { clearDrawnLayers.current = fn; }}
                 />
-                {selectedFips && selectedStateFips && (
-                    <CountyBoundary
-                        stateFips={selectedStateFips}
-                        countyFips={selectedFips}
-                    />
+                {selectedFips && selectedStateFips && countyGeoJSON && (
+                    <CountyBoundary geojson={countyGeoJSON} />
                 )}
             </MapContainer>
             {(showGuide || showSelector || showModal || showQuestionnaire) && (
@@ -251,18 +260,111 @@ export default function MappingTool() {
             {showSelector && (
                 <div className="fixed inset-0 flex items-center justify-center z-20">
                     <StateCountySelector
-                        onConfirm={(fips, centroid, stateFips) => {
-                            setSelectedFips(fips);
-                            setSelectedStateFips(stateFips);
-                            setMapCenter(centroid);
-                            if (mapRef.current) {
-                                mapRef.current.setView(centroid, 11);
-                            }
-                            setSetupComplete(true);
+                        onConfirm={async (sel) => {
+                            setSelectedStateFips(sel.stateFips);
+                            setSelectedStateCode(sel.stateCode);
+                            setSelectedFips(sel.countyFips);
+                            setCountyGeoJSON(null);
                             setShowSelector(false);
-                            setShowModal(true);
+                            setSetupComplete(true);
+
+                            const stateInfo = STATES.find((s) => s.code === sel.stateCode);
+                            const stateCentroid = stateInfo?.centroid ?? CA_CENTER;
+
+                            // No county: pan to state centroid and skip the geometry fetch
+                            if (!sel.countyFips) {
+                                setMapCenter(stateCentroid);
+                                if (mapRef.current) {
+                                    mapRef.current.setView(stateCentroid, 8);
+                                }
+                                setShowModal(true);
+                                return;
+                            }
+
+                            setGeometryLoading(true);
+                            try {
+                                const params = new URLSearchParams({
+                                    where: `STATE='${sel.stateFips}' AND COUNTY='${sel.countyFips}'`,
+                                    outFields: "NAME",
+                                    geometryPrecision: "5",
+                                    f: "geojson",
+                                    outSR: "4326",
+                                });
+                                const res = await fetch(`${TIGERWEB_URL}?${params}`);
+                                const data = await res.json();
+                                setCountyGeoJSON(data);
+
+                                // Pan to county bbox centroid
+                                let centroid = stateCentroid;
+                                const coords =
+                                    data?.features?.[0]?.geometry?.coordinates;
+                                if (coords) {
+                                    const flat: number[][] = [];
+                                    const walk = (node: any) => {
+                                        if (
+                                            Array.isArray(node) &&
+                                            typeof node[0] === "number"
+                                        ) {
+                                            flat.push(node as number[]);
+                                        } else if (Array.isArray(node)) {
+                                            node.forEach(walk);
+                                        }
+                                    };
+                                    walk(coords);
+                                    if (flat.length > 0) {
+                                        const lngs = flat.map((c) => c[0]);
+                                        const lats = flat.map((c) => c[1]);
+                                        centroid = [
+                                            (Math.min(...lats) + Math.max(...lats)) / 2,
+                                            (Math.min(...lngs) + Math.max(...lngs)) / 2,
+                                        ];
+                                    }
+                                }
+                                setMapCenter(centroid);
+                                if (mapRef.current) {
+                                    mapRef.current.setView(centroid, 11);
+                                }
+                            } catch {
+                                // Fall back to state centroid on failure
+                                setMapCenter(stateCentroid);
+                                if (mapRef.current) {
+                                    mapRef.current.setView(stateCentroid, 8);
+                                }
+                            } finally {
+                                setGeometryLoading(false);
+                                setShowModal(true);
+                            }
                         }}
                     />
+                </div>
+            )}
+            {geometryLoading && (
+                <div className="absolute inset-6 md:inset-12 md:bottom-14 z-20 flex items-center justify-center pointer-events-none">
+                    <div className="flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
+                        <svg
+                            className="animate-spin h-5 w-5 text-[#efefd1]"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                        >
+                            <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                            />
+                            <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                            />
+                        </svg>
+                        <span className="text-[#efefd1] text-sm">
+                            Loading county boundary…
+                        </span>
+                    </div>
                 </div>
             )}
             {showModal && (
@@ -275,6 +377,24 @@ export default function MappingTool() {
             )}
             {/* Button overlay — positioned to exactly match the map's edges */}
             <div className="absolute inset-6 md:inset-12 md:bottom-14 pointer-events-none z-10">
+                {/* Data availability note */}
+                {showDataNote && !isBlocked && drawnPolygons.length === 0 && (
+                    <div className="absolute top-4 right-4 pointer-events-auto max-w-[15rem] md:max-w-xs bg-[#aa5042] border border-[#D8BD8A] rounded px-3 py-2 shadow-lg">
+                        <button
+                            onClick={() => setShowDataNote(false)}
+                            aria-label="Dismiss note"
+                            className="absolute top-1 right-1.5 text-[#efefd1] opacity-60 hover:opacity-100 text-xs leading-none"
+                        >
+                            ✕
+                        </button>
+                        <p className="text-[#efefd1] text-[10px] md:text-xs leading-snug pr-3">
+                            Prefire uses free public imagery and building data. Some homes, especially in dense forest or mountainous terrain, may be
+                            hidden or appear shifted. Try the{" "}
+                            <span className="text-[#D8BD8A] font-medium">Aerial (NAIP)</span>{" "}
+                            layer if the satellite view looks off.
+                        </p>
+                    </div>
+                )}
                 {/* Polygon count + submit */}
                 {drawnPolygons.length > 0 && !showConfirm && (
                     <div className="absolute top-4 right-4 pointer-events-auto flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
@@ -312,30 +432,24 @@ export default function MappingTool() {
                         ?
                     </button>
                 )}
-                {/* Layer toggle */}
+                {/* Layer dropdown */}
                 <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto flex items-center gap-2 md:gap-3 transition-opacity ${isBlocked ? "opacity-50 pointer-events-none" : ""}`}>
-                    <div className="flex rounded overflow-hidden shadow-lg border border-[#D8BD8A]">
-                        <button
-                            onClick={() => setLayer("satellite")}
-                            className={`px-2 py-1 text-xs md:px-4 md:py-2 md:text-sm font-medium transition-colors ${
-                                layer === "satellite"
-                                    ? "bg-[#D8BD8A] text-black"
-                                    : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
-                            }`}
-                        >
-                            Satellite
-                        </button>
-                        <button
-                            onClick={() => setLayer("street")}
-                            className={`px-2 py-1 text-xs md:px-4 md:py-2 md:text-sm font-medium transition-colors ${
-                                layer === "street"
-                                    ? "bg-[#D8BD8A] text-black"
-                                    : "bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e]"
-                            }`}
-                        >
-                            Topo
-                        </button>
-                    </div>
+                    <select
+                        value={layer}
+                        onChange={(e) => setLayer(e.target.value as "mapbox" | "esri" | "topo")}
+                        aria-label="Base map layer"
+                        className="px-2 py-1 text-xs md:px-3 md:py-2 md:text-sm font-medium rounded shadow-lg border border-[#D8BD8A] bg-[#aa5042] text-[#efefd1] hover:bg-[#c0604e] transition-colors cursor-pointer appearance-none pr-7 bg-no-repeat bg-right"
+                        style={{
+                            backgroundImage:
+                                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23efefd1' d='M0 0l5 6 5-6z'/></svg>\")",
+                            backgroundPosition: "right 0.5rem center",
+                            backgroundSize: "10px 6px",
+                        }}
+                    >
+                        <option value="mapbox">Satellite (Mapbox)</option>
+                        <option value="esri">Aerial (Esri / NAIP)</option>
+                        <option value="topo">Streets (Mapbox)</option>
+                    </select>
                     <div className="relative group">
                         <button
                             onClick={() => setShowBuildings((b) => !b)}
@@ -369,11 +483,12 @@ export default function MappingTool() {
                     />
                 </div>
             )}
-            {showConfirm && selectedFips && (
+            {showConfirm && selectedStateFips && (
                 <ConfirmSubmitPopup
                     drawnPolygons={drawnPolygons}
                     onClose={() => setShowConfirm(false)}
                     fips={selectedFips}
+                    state={selectedStateCode ?? "CA"}
                     questionnaire={questionnaireAnswers}
                 />
             )}

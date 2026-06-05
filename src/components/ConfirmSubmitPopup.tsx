@@ -8,11 +8,13 @@ function ConfirmSubmitPopup({
     drawnPolygons,
     onClose,
     fips,
+    state,
     questionnaire,
 }: {
     drawnPolygons: any[];
     onClose: () => void;
-    fips: string;
+    fips: string | null;
+    state: string;
     questionnaire?: QuestionnaireAnswers | null;
 }) {
     const [email, setEmail] = useState("");
@@ -90,7 +92,8 @@ function ConfirmSubmitPopup({
                                     try {
                                         setLoading(true);
                                         await axios.post(API_URL, {
-                                            fips,
+                                            ...(fips != null && { fips }),
+                                            state,
                                             email,
                                             geometry: drawnPolygons.map(
                                                 (p) => p.geometry,

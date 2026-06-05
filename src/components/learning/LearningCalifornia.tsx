@@ -13,8 +13,7 @@ export default function LearningCalifornia() {
 
             <h1 className="text-3xl md:text-5xl font-bold mb-4">California</h1>
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-10">
-                California faces more wildfire risk than any other U.S. state. The Prefire
-                analyzer is currently available for select California communities. These
+                California faces more wildfire risk than any other U.S. state. These
                 resources cover the state-specific regulations, risk maps, and programs
                 that affect California homeowners.
             </p>
@@ -22,15 +21,41 @@ export default function LearningCalifornia() {
             <div className="space-y-6">
                 <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
                     <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
-                        Fire Hazard Severity Zones (FHSZ)
+                        Wildfire Hazard Potential (WHP)
                     </h2>
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
-                        CAL FIRE maps the entire state into Moderate, High, and Very High Fire
-                        Hazard Severity Zones based on fuel, slope, fire weather, and ember
-                        production. Your zone determines which state regulations apply to your
-                        property and affects insurance availability and local fire code
-                        requirements. Prefire uses FHSZ data to set baseline risk context for
-                        your area.
+                        The U.S. Forest Service publishes Wildfire Hazard Potential — a
+                        national 270 m raster that quantifies the relative likelihood of
+                        wildfire affecting resources and assets. WHP integrates fuels,
+                        weather, topography, and historical fire data into five classes:
+                        Very Low, Low, Moderate, High, and Very High. Because it covers
+                        all 50 states with a consistent methodology, Prefire uses WHP
+                        as the baseline risk context for every analysis, including
+                        California properties.
+                    </p>
+                    <a
+                        href="https://www.fs.usda.gov/rds/archive/catalog/RDS-2015-0047-4"
+                        className={EXTERNAL_LINK}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        USFS WHP dataset ↗
+                    </a>
+                </div>
+
+                <div className="border border-[#D8BD8A] border-opacity-30 rounded-xl p-5">
+                    <h2 className="text-[#D8BD8A] font-semibold text-base mb-2">
+                        CAL FIRE Fire Hazard Severity Zones (FHSZ) — State Regulatory Context
+                    </h2>
+                    <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
+                        Separate from WHP, CAL FIRE maps California into Moderate, High,
+                        and Very High Fire Hazard Severity Zones based on fuel, slope,
+                        fire weather, and ember production. Your FHSZ determines which
+                        state regulations apply to your property — including vegetation
+                        clearance requirements, ember-resistant venting mandates, and
+                        disclosure obligations — and affects insurance availability. FHSZ
+                        is California-only and not used in Prefire's risk score, but it
+                        is important context for CA homeowners navigating compliance.
                     </p>
                     <a
                         href="https://osfm.fire.ca.gov/what-we-do/community-wildfire-preparedness-and-mitigation/fire-hazard-severity-zones"

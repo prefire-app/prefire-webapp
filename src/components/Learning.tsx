@@ -166,7 +166,7 @@ export default function Learning() {
                         </span>
                     </div>
                     <p className="text-[#efefd1] text-xs opacity-60 mt-1 leading-relaxed">
-                        PRC § 4291, AB 3074, CAL FIRE resources, Fire Hazard Severity Zones
+                        PRC § 4291, AB 3074, CAL FIRE FHSZ, USFS Wildfire Hazard Potential
                     </p>
                     <span className="text-[#D8BD8A] text-xs underline mt-3 inline-block group-hover:opacity-100 opacity-70">
                         View California resources →

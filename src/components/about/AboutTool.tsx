@@ -81,8 +81,8 @@ export default function AboutTool() {
                         <li>
                             <span className="text-[#D8BD8A] font-medium">Risk scoring</span>{" "}
                             — flagged crowns, questionnaire answers, and your property's{" "}
-                            <span className="text-[#D8BD8A] font-medium">Fire Hazard Severity
-                            Zone (FHSZ)</span>{" "}
+                            <span className="text-[#D8BD8A] font-medium">Wildfire Hazard
+                            Potential (WHP)</span>{" "}
                             class are combined into a final score.{" "}
                             <Link
                                 to="/about/methodology"

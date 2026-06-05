@@ -12,8 +12,8 @@ export default function AboutMethodology() {
 
             <h1 className="text-3xl md:text-5xl font-bold mb-4">Methodology</h1>
             <p className="text-[#efefd1] opacity-80 text-lg leading-relaxed mb-2">
-                Our defensible space assessment is based on CAL FIRE
-                regulations and NFPA 1144 standards. The scoring methodology is actively
+                Our defensible space assessment is based on national wildfire regulations
+                and NFPA 1144 standards. The scoring methodology is actively
                 being developed and refined as we gather more data and feedback. Much of the project is also based on the research done by Syphard et al. (2014).
             </p>
             <p className="text-[#efefd1] opacity-50 text-sm mb-10">
@@ -28,7 +28,7 @@ export default function AboutMethodology() {
                     <p className="text-[#efefd1] text-sm opacity-80 leading-relaxed mb-3">
                         California law (PRC § 4291) defines two primary defensible space
                         zones around structures. Our assessment evaluates compliance with
-                        both. For a deeper primer on what defensible space is and why it
+                        both. For more info on what defensible space is and why it
                         matters, see the{" "}
                         <Link
                             to="/learning"
@@ -47,7 +47,7 @@ export default function AboutMethodology() {
                                 3074 (2021) established this zone, requiring all combustible
                                 materials to be removed including mulch, wood debris, and
                                 vegetation. Non-combustible hardscaping and ember-resistant
-                                vents are key here. This zone directly determines whether
+                                vents are very relevant. This zone directly determines whether
                                 embers landing near your home ignite it.
                             </p>
                         </li>
@@ -111,8 +111,10 @@ export default function AboutMethodology() {
                         </li>
                         <li>
                             <span className="text-[#D8BD8A] font-medium">Historical and regional data</span>{" "}
-                            — as of now, we use the CAL FIRE Fire Hazard Severity Zone map to set a baseline risk level for
-                            your area. We are actively working to incorporate other local data.
+                            — we use the USFS Wildfire Hazard Potential (WHP) dataset to set
+                            a national baseline risk level for your area. WHP covers all 50
+                            states at 270 m resolution and is updated annually by the U.S.
+                            Forest Service.
                         </li>
                     </ul>
                 </div>
@@ -161,13 +163,16 @@ export default function AboutMethodology() {
                         </li>
                         <li className="border border-[#D8BD8A] border-opacity-20 rounded-lg p-3">
                             <div className="flex justify-between items-center mb-1">
-                                <span className="text-[#D8BD8A] font-semibold text-sm">Fire Hazard Severity Zone (FHSZ)</span>
+                                <span className="text-[#D8BD8A] font-semibold text-sm">Wildfire Hazard Potential (WHP)</span>
                                 <span className="text-[#D8BD8A] text-xs font-mono">up to 15 pts</span>
                             </div>
                             <p className="text-[#efefd1] text-xs opacity-80 leading-relaxed">
-                                A community-level context multiplier based on the CAL FIRE
-                                FHSZ classification for your area — Very High (15 pts),
-                                High (8 pts), or Moderate (5 pts).
+                                A landscape-level context multiplier sourced from the USFS
+                                WHP dataset — Very High (15 pts), High (12 pts),
+                                Moderate (8 pts), Low (4 pts), or Very Low (1 pt).
+                                WHP integrates fuels, weather, topography, and fire history
+                                to quantify the relative potential for wildfire to affect
+                                resources and assets across all 50 states.
                             </p>
                         </li>
                     </ul>

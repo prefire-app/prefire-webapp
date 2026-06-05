@@ -52,12 +52,7 @@ const pages: { title: string; content: React.ReactNode }[] = [
                             1. Select your state and county
                         </h3>
                         <p className="text-[#efefd1] text-xs leading-relaxed opacity-80">
-                            Choose your county from the selector that will appear next. We're
-                            currently expanding our data coverage —{" "}
-                            <span className="text-[#D8BD8A]">
-                                at this time only select California counties are available
-                            </span>
-                            , with more states coming soon.
+                            Choose your county from the selector that will appear next. 
                         </p>
                     </div>
                     <div className="border border-[#D8BD8A] border-opacity-40 rounded-lg p-3">
@@ -122,21 +117,59 @@ const pages: { title: string; content: React.ReactNode }[] = [
                     </div>
                 </div>
                 <h2 className="text-[#efefd1] font-bold text-base mt-5 mb-3">Tips</h2>
-                <div className="space-y-4">
-                    <div className="border border-[#D8BD8A] border-opacity-40 rounded-lg p-3">
-                        <h3 className="text-[#D8BD8A] font-semibold text-sm mb-1">
-                            Can't see your house?
-                        </h3>
-                        <p className="text-[#efefd1] text-xs leading-relaxed opacity-80">
-                            Toggle the{" "}
-                            <span className="text-[#FF6B35] font-medium">
-                                Building Footprints
-                            </span>{" "}
-                            overlay at the bottom of the map (zoom in first to enable it).
-                            This shows known structure outlines you can draw over.
-                        </p>
+                <div className="space-y-4"> 
+                    <div className="space-y-4">
+                        <div className="border border-[#D8BD8A] border-opacity-40 rounded-lg p-3">
+                            <h3 className="text-[#D8BD8A] font-semibold text-sm mb-1">
+                                Can't see your house?
+                            </h3>
+                            <p className="text-[#efefd1] text-xs leading-relaxed opacity-80 mb-2">
+                                Toggle the{" "}
+                                <span className="text-[#FF6B35] font-medium">
+                                    Building Footprints
+                                </span>{" "}
+                                overlay at the bottom of the map (zoom in first to enable it).
+                                This shows known structure outlines you can draw over.
+                            </p>
+                            <p className="text-[#efefd1] text-xs leading-relaxed opacity-70">
+                                Prefire relies on free, publicly available satellite imagery
+                                and building data. If your home isn't
+                                visible, draw your best estimate of its outline using nearby
+                                landmarks (driveway, clearings, neighboring structures) for
+                                reference.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="border border-[#D8BD8A] border-opacity-40 rounded-lg p-3">
+                            <h3 className="text-[#D8BD8A] font-semibold text-sm mb-1">
+                                Need a different map layer?
+                            </h3>
+                            <p className="text-[#efefd1] text-xs leading-relaxed opacity-80">
+                                Use the{" "}
+                                <span className="text-[#FF6B35] font-medium">layer dropdown</span>{" "}
+                                at the bottom of the map to switch the base map:
+                            </p>
+                            <ul className="text-[#efefd1] text-xs leading-relaxed opacity-80 list-disc pl-5 mt-2 space-y-1">
+                                <li>
+                                    <span className="text-[#D8BD8A] font-medium">Satellite (Mapbox)</span> &mdash;
+                                    high-resolution global imagery, default view.
+                                </li>
+                                <li>
+                                    <span className="text-[#D8BD8A] font-medium">Aerial (Esri / NAIP)</span> &mdash;
+                                    USDA aerial photography flown from aircraft. Often less distorted than
+                                    satellite imagery in mountainous or heavily-forested areas like the Sierra.
+                                </li>
+                                <li>
+                                    <span className="text-[#D8BD8A] font-medium">Streets (Mapbox)</span> &mdash;
+                                    roads, buildings, and labels. Useful for locating your property.
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
+                
             </>
         ),
     },
