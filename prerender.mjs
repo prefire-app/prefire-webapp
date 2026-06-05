@@ -135,7 +135,7 @@ const routes = [
         url: "/learning/california",
         outFile: "dist/learning/california/index.html",
         title: "California Wildfire Resources — Defensible Space & Regulations | Prefire",
-        description: "California-specific wildfire defensible space resources: PRC § 4291, AB 3074, CAL FIRE Fire Hazard Severity Zones, and how to use Prefire for your CA property.",
+        description: "California-specific wildfire defensible space resources: PRC § 4291, AB 3074, CAL FIRE Fire Hazard Severity Zones (regulatory context), and how Prefire uses USFS Wildfire Hazard Potential (WHP) to score CA properties.",
         canonical: `${BASE_URL}/learning/california`,
     },
     ...blogPostRoutes,

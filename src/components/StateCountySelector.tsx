@@ -1,26 +1,31 @@
-import { useState } from "react";
-import { STATES, COUNTIES } from "../lib/geo";
+import { useMemo, useState } from "react";
+import { STATES } from "../lib/geo";
+import { COUNTIES_BY_STATE } from "../lib/counties";
+import type { CountyRef } from "../lib/counties";
 
-const UNAVAILABLE_MSG =
-    "Sorry, we are working to expand to more states and counties.";
+export type AreaSelection = {
+    stateCode: string;
+    stateFips: string;
+    countyFips: string | null;
+    countyName: string | null;
+};
 
 function StateCountySelector({
     onConfirm,
 }: {
-    onConfirm: (
-        fips: string,
-        centroid: [number, number],
-        stateFips: string,
-    ) => void;
+    onConfirm: (selection: AreaSelection) => void;
 }) {
     const [selectedState, setSelectedState] = useState<string | null>(null);
-    const [selectedCounty, setSelectedCounty] = useState<{
-        name: string;
-        fips: string;
-        centroid: [number, number];
-    } | null>(null);
+    const [selectedCounty, setSelectedCounty] = useState<CountyRef | null>(null);
 
-    const counties = selectedState ? (COUNTIES[selectedState] ?? []) : [];
+    const counties = useMemo(
+        () => (selectedState ? COUNTIES_BY_STATE[selectedState] ?? [] : []),
+        [selectedState],
+    );
+    const state = STATES.find((s) => s.code === selectedState);
+
+    const canConfirm =
+        !!selectedState && (selectedCounty !== null || counties.length === 0);
 
     return (
         <div className="bg-[#aa5042] p-5 md:p-8 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90dvh] overflow-y-auto">
@@ -36,35 +41,22 @@ function StateCountySelector({
                     <h3 className="text-[#d8bd8a] font-semibold mb-3 text-xs uppercase tracking-widest">
                         State
                     </h3>
-                    <div className="space-y-1">
-                        {STATES.map((state) => (
-                            <div key={state.code} className="relative group">
-                                <button
-                                    onClick={() => {
-                                        if (state.available) {
-                                            setSelectedState(state.code);
-                                            setSelectedCounty(null);
-                                        }
-                                    }}
-                                    disabled={!state.available}
-                                    className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                                        state.available
-                                            ? selectedState === state.code
-                                                ? "bg-[#d8bd8a] text-black font-semibold"
-                                                : "text-[#efefd1] hover:bg-[#c0604e] cursor-pointer"
-                                            : "text-[#efefd1] opacity-35 cursor-not-allowed"
-                                    }`}
-                                >
-                                    {state.name}
-                                </button>
-                                {!state.available && (
-                                    <div className="pointer-events-none absolute left-0 top-full mt-1 z-50 hidden group-hover:block w-56">
-                                        <div className="bg-[#1e1010] text-[#efefd1] text-xs px-3 py-2 rounded shadow-lg leading-snug">
-                                            {UNAVAILABLE_MSG}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                    <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+                        {STATES.map((s) => (
+                            <button
+                                key={s.code}
+                                onClick={() => {
+                                    setSelectedState(s.code);
+                                    setSelectedCounty(null);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
+                                    selectedState === s.code
+                                        ? "bg-[#d8bd8a] text-black font-semibold"
+                                        : "text-[#efefd1] hover:bg-[#c0604e] cursor-pointer"
+                                }`}
+                            >
+                                {s.name}
+                            </button>
                         ))}
                     </div>
                 </div>
@@ -80,7 +72,7 @@ function StateCountySelector({
                         </p>
                     ) : counties.length === 0 ? (
                         <p className="text-[#efefd1] opacity-40 text-sm italic mt-2">
-                            No counties available yet
+                            No county data available — you can still continue
                         </p>
                     ) : (
                         <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
@@ -105,20 +97,17 @@ function StateCountySelector({
             <div className="mt-6 flex justify-end">
                 <button
                     onClick={() => {
-                        if (selectedCounty && selectedState) {
-                            const state = STATES.find(
-                                (s) => s.code === selectedState,
-                            )!;
-                            onConfirm(
-                                selectedCounty.fips,
-                                selectedCounty.centroid,
-                                state.fips,
-                            );
-                        }
+                        if (!state) return;
+                        onConfirm({
+                            stateCode: state.code,
+                            stateFips: state.fips,
+                            countyFips: selectedCounty?.fips ?? null,
+                            countyName: selectedCounty?.name ?? null,
+                        });
                     }}
-                    disabled={!selectedCounty}
+                    disabled={!canConfirm}
                     className={`px-6 py-2 rounded font-semibold transition-colors ${
-                        selectedCounty
+                        canConfirm
                             ? "bg-[#d8bd8a] text-black hover:bg-[#c9ae7a] cursor-pointer"
                             : "bg-[#d8bd8a] opacity-40 text-black cursor-not-allowed"
                     }`}

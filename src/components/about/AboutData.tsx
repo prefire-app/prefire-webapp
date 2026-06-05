@@ -17,9 +17,9 @@ const pipelineSources = [
         url: "https://github.com/microsoft/USBuildingFootprints",
     },
     {
-        name: "CAL FIRE Fire Hazard Severity Zones",
-        category: "Risk Context — FHSZ Score",
-        url: "https://osfm.fire.ca.gov/what-we-do/community-wildfire-preparedness-and-mitigation/fire-hazard-severity-zones",
+        name: "USFS Wildfire Hazard Potential (WHP)",
+        category: "Risk Context — WHP Score",
+        url: "https://www.fs.usda.gov/rds/archive/catalog/RDS-2015-0047-4",
     },
     {
         name: "DeepForest & SAM 2",
@@ -120,10 +120,12 @@ export default function AboutData() {
                     Coverage Note
                 </h2>
                 <p className="text-[#4F3130] text-sm opacity-70 leading-relaxed">
-                    NAIP imagery, 3DEP elevation, and FHSZ data are currently available
-                    for California only. Building footprint coverage follows the same
-                    boundary. Expanding to additional states requires sourcing equivalent
-                    state-level datasets and extending the data pipeline.
+                    NAIP imagery and 3DEP elevation are currently available
+                    for California only. Building footprint coverage is expanding
+                    state by state. WHP data is national — all 50 states are
+                    covered. Expanding imagery to additional states requires
+                    sourcing equivalent datasets and extending the data pipeline.
+                    I had to host the images myself due to resolution issues.
                 </p>
             </div>
 
