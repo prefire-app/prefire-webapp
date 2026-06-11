@@ -7,7 +7,7 @@ export default function Donate() {
                 Support Prefire
             </h1>
             <p className="text-[#efefd1] opacity-80 text-lg max-w-xl mb-2">
-                Prefire is a free, grassroots tool built to help everyday
+                Prefire is a free tool built to help everyday
                 homeowners protect their property from wildfires. We do not associate with
                 insurance companies like other tools.
             </p>
