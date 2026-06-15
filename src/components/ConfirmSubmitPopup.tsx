@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
 import { API_URL } from "../lib/constants";
+import Modal from "./Modal";
 
 function ConfirmSubmitPopup({
     drawnPolygons,
@@ -28,7 +29,7 @@ function ConfirmSubmitPopup({
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-30">
+        <Modal isOpen={true} onClose={onClose} title="Submit polygons for analysis">
             <div className="bg-[#aa5042] p-6 rounded shadow-lg max-w-xs w-full mx-4">
                 {submitted ? (
                     <>
@@ -174,7 +175,7 @@ function ConfirmSubmitPopup({
                     </>
                 )}
             </div>
-        </div>
+        </Modal>
     );
 }
 

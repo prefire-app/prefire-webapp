@@ -267,7 +267,7 @@ export default function MappingTool() {
                     <CountyBoundary geojson={countyGeoJSON} />
                 )}
             </MapContainer>
-            {(showGuide || showSelector || showModal || showQuestionnaire) && (
+            {(showGuide || showSelector) && (
                 <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
             )}
             {showGuide && (
@@ -393,12 +393,10 @@ export default function MappingTool() {
                 </div>
             )}
             {showModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-20">
-                    <AddressSearchPopup
-                        onClose={() => setShowModal(false)}
-                        onSearch={handleMoveMap}
-                    />
-                </div>
+                <AddressSearchPopup
+                    onClose={() => setShowModal(false)}
+                    onSearch={handleMoveMap}
+                />
             )}
             {/* Button overlay — positioned to exactly match the map's edges */}
             <div className="absolute inset-6 md:inset-12 md:bottom-14 pointer-events-none z-10">
@@ -513,15 +511,13 @@ export default function MappingTool() {
                 </div>
             </div>
             {showQuestionnaire && (
-                <div className="fixed inset-0 flex items-center justify-center z-20">
-                    <QuestionnairePopup
-                        onComplete={(answers) => {
-                            setQuestionnaireAnswers(answers);
-                            setShowQuestionnaire(false);
-                            setShowConfirm(true);
-                        }}
-                    />
-                </div>
+                <QuestionnairePopup
+                    onComplete={(answers) => {
+                        setQuestionnaireAnswers(answers);
+                        setShowQuestionnaire(false);
+                        setShowConfirm(true);
+                    }}
+                />
             )}
             {showConfirm && selectedStateFips && (
                 <ConfirmSubmitPopup

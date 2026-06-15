@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
 import type { Question } from "../lib/questionnaire";
 import { ZONES, EMPTY_ANSWERS } from "../lib/questionnaire";
+import Modal from "./Modal";
 
 export default function QuestionnairePopup({
     onComplete,
@@ -37,7 +38,8 @@ export default function QuestionnairePopup({
     }
 
     return (
-        <div className="bg-[#aa5042] rounded shadow-lg max-w-md w-full mx-4 flex flex-col max-h-[85vh]">
+        <Modal isOpen={true} onClose={() => onComplete(null)} title="Defensible Space Questionnaire">
+            <div className="bg-[#aa5042] rounded shadow-lg max-w-md w-full mx-4 flex flex-col max-h-[85vh]">
             {/* Header */}
             <div className="p-5 pb-3 border-b border-[#d8bd8a]/30">
                 <div className="flex justify-between items-center mb-3">
@@ -102,7 +104,8 @@ export default function QuestionnairePopup({
                     {isLastZone ? "Finish" : "Next Zone →"}
                 </button>
             </div>
-        </div>
+            </div>
+        </Modal>
     );
 }
 

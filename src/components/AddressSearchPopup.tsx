@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Modal from "./Modal";
 
 type Props = {
     onClose: () => void;
@@ -25,30 +26,33 @@ function AddressSearchPopup({ onClose, onSearch }: Props) {
     };
 
     return (
-        <div className="bg-[#aa5042] rounded shadow-lg p-6 max-w-md w-full relative">
-            <button
-                className="absolute top-3 right-5 text-[#efefd1] hover:text-gray-700"
-                onClick={onClose}
-            >
-                &times;
-            </button>
-            <h2 className="text-[#efefd1] text-lg font-bold mb-2">
-                Search Address
-            </h2>
-            <input
-                type="text"
-                placeholder="Enter address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="text-[#efefd1] w-full p-2 rounded mb-2"
-            />
-            <button
-                className="w-full bg-[#d8bd8a] text-black p-2 rounded hover:bg-[#4f3130]"
-                onClick={handleSearch}
-            >
-                Search
-            </button>
-        </div>
+        <Modal isOpen={true} onClose={onClose} title="Search Address">
+            <div className="bg-[#aa5042] rounded shadow-lg p-6 max-w-md w-full relative">
+                <button
+                    className="absolute top-3 right-5 text-[#efefd1] hover:text-gray-700"
+                    onClick={onClose}
+                    aria-label="Close address search"
+                >
+                    &times;
+                </button>
+                <h2 className="text-[#efefd1] text-lg font-bold mb-2">
+                    Search Address
+                </h2>
+                <input
+                    type="text"
+                    placeholder="Enter address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="text-[#efefd1] w-full p-2 rounded mb-2"
+                />
+                <button
+                    className="w-full bg-[#d8bd8a] text-black p-2 rounded hover:bg-[#4f3130]"
+                    onClick={handleSearch}
+                >
+                    Search
+                </button>
+            </div>
+        </Modal>
     );
 }
 
