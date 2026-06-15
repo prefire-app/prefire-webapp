@@ -18,6 +18,10 @@ export const PMTILES_BASE_URL =
 
 export const BUILDING_MIN_ZOOM = 13;
 
+/** Match BE caps in src/api/models/geometry.py — keep in sync. */
+export const MAX_POLYGONS_PER_REQUEST = 50;
+export const MAX_VERTICES_PER_POLYGON = 1000;
+
 /** Default map center (California centroid fallback). */
 export const CA_CENTER: [number, number] = [36.7783, -119.4179];
 

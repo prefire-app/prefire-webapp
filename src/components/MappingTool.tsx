@@ -12,7 +12,7 @@ import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
 import QuestionnairePopup from "./QuestionnairePopup";
 import StateCountySelector from "./StateCountySelector";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
-import { TIGERWEB_URL, PMTILES_BASE_URL, BUILDING_MIN_ZOOM, CA_CENTER, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION } from "../lib/constants";
+import { TIGERWEB_URL, PMTILES_BASE_URL, BUILDING_MIN_ZOOM, CA_CENTER, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION, MAX_POLYGONS_PER_REQUEST, MAX_VERTICES_PER_POLYGON } from "../lib/constants";
 import { STATES } from "../lib/geo";
 
 function CountyBoundary({ geojson }: { geojson: any }) {
@@ -176,8 +176,33 @@ export default function MappingTool() {
 
     const clearDrawnLayers = useRef<() => void>(() => {});
 
+    const [drawError, setDrawError] = useState<string | null>(null);
+
     const handlePolygonDrawn = useCallback((geojson: any) => {
-        setDrawnPolygons((prev) => [...prev, geojson]);
+        setDrawnPolygons((prev) => {
+            if (prev.length >= MAX_POLYGONS_PER_REQUEST) {
+                setDrawError(
+                    `Limit of ${MAX_POLYGONS_PER_REQUEST} polygons reached. Remove one before drawing another.`,
+                );
+                return prev;
+            }
+            const rings: number[][][] | undefined =
+                geojson?.geometry?.coordinates;
+            if (Array.isArray(rings)) {
+                const totalVertices = rings.reduce(
+                    (sum, ring) => sum + (Array.isArray(ring) ? ring.length : 0),
+                    0,
+                );
+                if (totalVertices > MAX_VERTICES_PER_POLYGON) {
+                    setDrawError(
+                        `Polygon has ${totalVertices} vertices; max is ${MAX_VERTICES_PER_POLYGON}. Try a simpler shape.`,
+                    );
+                    return prev;
+                }
+            }
+            setDrawError(null);
+            return [...prev, geojson];
+        });
     }, []);
 
     const handleMoveMap = (lat: number, lng: number) => {
@@ -418,6 +443,21 @@ export default function MappingTool() {
                         >
                             Clear
                         </button>
+                    </div>
+                )}
+                {drawError && (
+                    <div
+                        role="alert"
+                        className="absolute top-20 right-4 pointer-events-auto max-w-xs bg-yellow-200 border border-yellow-500 text-yellow-900 rounded px-3 py-2 shadow-lg text-xs"
+                    >
+                        <button
+                            onClick={() => setDrawError(null)}
+                            aria-label="Dismiss warning"
+                            className="absolute top-0.5 right-1.5 opacity-60 hover:opacity-100 text-xs"
+                        >
+                            ✕
+                        </button>
+                        <p className="pr-3">{drawError}</p>
                     </div>
                 )}
                 {/* Help button */}
