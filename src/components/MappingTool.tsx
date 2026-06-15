@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(step-12): refactor leaflet/leaflet-draw types, remove file-level disable */
 import { useRef, useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { leafletLayer, PolygonSymbolizer } from "protomaps-leaflet";
@@ -7,6 +6,11 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import L from "leaflet";
 import "leaflet-draw";
+import type {
+    Feature,
+    FeatureCollection,
+    Polygon as GeoJSONPolygon,
+} from "geojson";
 import AddressSearchPopup from "./AddressSearchPopup";
 import AnalyzerGuide from "./AnalyzerGuide";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
@@ -16,7 +20,11 @@ import type { QuestionnaireAnswers } from "../types/questionnaire";
 import { TIGERWEB_URL, PMTILES_BASE_URL, BUILDING_MIN_ZOOM, CA_CENTER, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION, MAX_POLYGONS_PER_REQUEST, MAX_VERTICES_PER_POLYGON } from "../lib/constants";
 import { STATES } from "../lib/geo";
 
-function CountyBoundary({ geojson }: { geojson: any }) {
+function CountyBoundary({
+    geojson,
+}: {
+    geojson: FeatureCollection | Feature | null;
+}) {
     const map = useMap();
     const layerRef = useRef<L.GeoJSON | null>(null);
 
@@ -52,14 +60,14 @@ function PMTilesBuildingsLayer({
     visible: boolean;
 }) {
     const map = useMap();
-    const layerRef = useRef<any>(null);
+    const layerRef = useRef<L.Layer | null>(null);
 
     useEffect(() => {
         if (!visible || !stateFips) return;
 
         const url = `${PMTILES_BASE_URL}${stateFips}.pmtiles`;
 
-        layerRef.current = leafletLayer({
+        const layer = leafletLayer({
             url,
             maxDataZoom: 15,
             paintRules: [
@@ -73,8 +81,9 @@ function PMTilesBuildingsLayer({
                 },
             ],
             labelRules: [],
-        });
-        layerRef.current.addTo(map);
+        }) as unknown as L.Layer;
+        layerRef.current = layer;
+        layer.addTo(map);
 
         return () => {
             if (layerRef.current) {
@@ -104,15 +113,16 @@ function LeafletDrawControls({
     onPolygonDrawn,
     onClearRef,
 }: {
-    onPolygonDrawn: (geojson: any) => void;
+    onPolygonDrawn: (geojson: Feature<GeoJSONPolygon>) => void;
     onClearRef: (clearFn: () => void) => void;
 }) {
     const map = useMap();
     const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
 
     useEffect(() => {
-        map.addLayer(drawnItemsRef.current);
-        onClearRef(() => drawnItemsRef.current.clearLayers());
+        const drawnItems = drawnItemsRef.current;
+        map.addLayer(drawnItems);
+        onClearRef(() => drawnItems.clearLayers());
 
         const drawControl = new L.Control.Draw({
             draw: {
@@ -124,17 +134,18 @@ function LeafletDrawControls({
                 circlemarker: false,
             },
             edit: {
-                featureGroup: drawnItemsRef.current,
+                featureGroup: drawnItems,
                 remove: true,
             },
         });
 
         map.addControl(drawControl);
 
-        function handleCreated(event: any) {
-            const layer = (event as any).layer;
-            drawnItemsRef.current.addLayer(layer);
-            const geojson = layer.toGeoJSON();
+        function handleCreated(event: L.LeafletEvent) {
+            const created = event as L.DrawEvents.Created;
+            const layer = created.layer;
+            drawnItems.addLayer(layer);
+            const geojson = (layer as L.Polygon).toGeoJSON() as Feature<GeoJSONPolygon>;
             onPolygonDrawn(geojson);
         }
 
@@ -143,15 +154,15 @@ function LeafletDrawControls({
         return () => {
             map.off(L.Draw.Event.CREATED, handleCreated);
             map.removeControl(drawControl);
-            map.removeLayer(drawnItemsRef.current);
+            map.removeLayer(drawnItems);
         };
-    }, [map, onPolygonDrawn]);
+    }, [map, onPolygonDrawn, onClearRef]);
 
     return null;
 }
 
 export default function MappingTool() {
-    const mapRef = useRef<any>(null);
+    const mapRef = useRef<L.Map | null>(null);
     const [showGuide, setShowGuide] = useState(true);
     const [setupComplete, setSetupComplete] = useState(false);
     const [showSelector, setShowSelector] = useState(false);
@@ -161,10 +172,10 @@ export default function MappingTool() {
         null,
     );
     const [selectedStateCode, setSelectedStateCode] = useState<string | null>(null);
-    const [countyGeoJSON, setCountyGeoJSON] = useState<any>(null);
+    const [countyGeoJSON, setCountyGeoJSON] = useState<FeatureCollection | null>(null);
     const [geometryLoading, setGeometryLoading] = useState(false);
     const [mapCenter, setMapCenter] = useState<[number, number]>(CA_CENTER);
-    const [drawnPolygons, setDrawnPolygons] = useState<any[]>([]);
+    const [drawnPolygons, setDrawnPolygons] = useState<Feature<GeoJSONPolygon>[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
     const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswers | null>(null);
@@ -178,8 +189,9 @@ export default function MappingTool() {
     const clearDrawnLayers = useRef<() => void>(() => {});
 
     const [drawError, setDrawError] = useState<string | null>(null);
+    const [tileError, setTileError] = useState<string | null>(null);
 
-    const handlePolygonDrawn = useCallback((geojson: any) => {
+    const handlePolygonDrawn = useCallback((geojson: Feature<GeoJSONPolygon>) => {
         setDrawnPolygons((prev) => {
             if (prev.length >= MAX_POLYGONS_PER_REQUEST) {
                 setDrawError(
@@ -231,6 +243,12 @@ export default function MappingTool() {
                         zoomOffset={-1}
                         maxNativeZoom={22}
                         maxZoom={22}
+                        eventHandlers={{
+                            tileerror: () =>
+                                setTileError(
+                                    "Failed to load map tiles. Check your connection or switch base layers.",
+                                ),
+                        }}
                     />
                 ) : layer === "topo" ? (
                     MAPBOX_STREETS_URL ? (
@@ -241,6 +259,12 @@ export default function MappingTool() {
                             zoomOffset={-1}
                             maxNativeZoom={22}
                             maxZoom={22}
+                            eventHandlers={{
+                                tileerror: () =>
+                                    setTileError(
+                                        "Failed to load map tiles. Check your connection or switch base layers.",
+                                    ),
+                            }}
                         />
                     ) : (
                         <TileLayer
@@ -248,6 +272,12 @@ export default function MappingTool() {
                             attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
                             maxNativeZoom={19}
                             maxZoom={22}
+                            eventHandlers={{
+                                tileerror: () =>
+                                    setTileError(
+                                        "Failed to load map tiles. Check your connection or switch base layers.",
+                                    ),
+                            }}
                         />
                     )
                 ) : (
@@ -256,6 +286,12 @@ export default function MappingTool() {
                         attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
                         maxNativeZoom={19}
                         maxZoom={22}
+                        eventHandlers={{
+                            tileerror: () =>
+                                setTileError(
+                                    "Failed to load map tiles. Check your connection or switch base layers.",
+                                ),
+                        }}
                     />
                 )}
                 <PMTilesBuildingsLayer stateFips={selectedStateFips} visible={showBuildings} />
@@ -326,7 +362,7 @@ export default function MappingTool() {
                                     data?.features?.[0]?.geometry?.coordinates;
                                 if (coords) {
                                     const flat: number[][] = [];
-                                    const walk = (node: any) => {
+                                    const walk = (node: unknown): void => {
                                         if (
                                             Array.isArray(node) &&
                                             typeof node[0] === "number"
@@ -457,6 +493,21 @@ export default function MappingTool() {
                             ✕
                         </button>
                         <p className="pr-3">{drawError}</p>
+                    </div>
+                )}
+                {tileError && (
+                    <div
+                        role="alert"
+                        className="absolute top-4 left-4 pointer-events-auto max-w-xs bg-yellow-200 border border-yellow-500 text-yellow-900 rounded px-3 py-2 shadow-lg text-xs"
+                    >
+                        <button
+                            onClick={() => setTileError(null)}
+                            aria-label="Dismiss tile error"
+                            className="absolute top-0.5 right-1.5 opacity-60 hover:opacity-100 text-xs"
+                        >
+                            ✕
+                        </button>
+                        <p className="pr-3">{tileError}</p>
                     </div>
                 )}
                 {/* Help button */}
