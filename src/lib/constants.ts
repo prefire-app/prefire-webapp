@@ -7,6 +7,7 @@ export const API_BASE_URL: string =
 
 export const API_URL = `${API_BASE_URL}/send-geometry`;
 export const HEALTH_URL = `${API_BASE_URL}/health`;
+export const GEOCODE_URL = `${API_BASE_URL}/geocode`;
 
 export const TIGERWEB_URL =
     "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";
