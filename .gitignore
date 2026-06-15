@@ -30,3 +30,4 @@ cf-config.json
 *.njsproj
 *.sln
 *.sw?
+tmp/

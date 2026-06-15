@@ -1,7 +1,12 @@
-export const API_URL =
-    import.meta.env.NODE_ENV === "local"
-        ? "http://127.0.0.1:8000/send-geometry"
-        : "https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com/send-geometry";
+const PROD_API_BASE = "https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com";
+const LOCAL_API_BASE = "http://127.0.0.1:8000";
+
+export const API_BASE_URL: string =
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) ??
+    (import.meta.env.DEV ? LOCAL_API_BASE : PROD_API_BASE);
+
+export const API_URL = `${API_BASE_URL}/send-geometry`;
+export const HEALTH_URL = `${API_BASE_URL}/health`;
 
 export const TIGERWEB_URL =
     "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1/query";

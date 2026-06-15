@@ -19,6 +19,7 @@ function ConfirmSubmitPopup({
 }) {
     const [email, setEmail] = useState("");
     const [emailError, setEmailError] = useState("");
+    const [submitError, setSubmitError] = useState("");
     const [submitted, setSubmitted] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -71,6 +72,7 @@ function ConfirmSubmitPopup({
                             onChange={(e) => {
                                 setEmail(e.target.value);
                                 setEmailError("");
+                                setSubmitError("");
                             }}
                             placeholder="you@example.com"
                             className="w-full px-3 py-2 rounded bg-[#8a3d34] text-[#efefd1] placeholder-[#efefd1]/40 border border-[#d8bd8a]/30 focus:outline-none focus:border-[#d8bd8a] text-sm mb-1"
@@ -78,6 +80,11 @@ function ConfirmSubmitPopup({
                         {emailError && (
                             <p className="text-yellow-300 text-xs mb-2">
                                 {emailError}
+                            </p>
+                        )}
+                        {submitError && (
+                            <p className="text-yellow-300 text-xs mb-2" role="alert">
+                                {submitError}
                             </p>
                         )}
                         <div className="mt-4 flex justify-center">
@@ -91,6 +98,7 @@ function ConfirmSubmitPopup({
                                     }
                                     try {
                                         setLoading(true);
+                                        setSubmitError("");
                                         await axios.post(API_URL, {
                                             ...(fips != null && { fips }),
                                             state,
@@ -106,6 +114,25 @@ function ConfirmSubmitPopup({
                                             "Error sending geometry to backend:",
                                             error,
                                         );
+                                        if (axios.isAxiosError(error) && error.response) {
+                                            const status = error.response.status;
+                                            const detail = error.response.data?.detail;
+                                            if (status >= 400 && status < 500) {
+                                                setSubmitError(
+                                                    typeof detail === "string"
+                                                        ? detail
+                                                        : "Submission rejected. Please check your input and try again.",
+                                                );
+                                            } else {
+                                                setSubmitError(
+                                                    "Server unavailable. Please try again in a moment.",
+                                                );
+                                            }
+                                        } else {
+                                            setSubmitError(
+                                                "Could not reach server. Check your connection and try again.",
+                                            );
+                                        }
                                     } finally {
                                         setLoading(false);
                                     }
