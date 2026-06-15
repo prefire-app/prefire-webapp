@@ -1,0 +1,37 @@
+{
+  "Name": "prefire-webapp-security-headers",
+  "Comment": "CSP, HSTS, nosniff, frame-ancestors=none, Referrer-Policy for prefire.online",
+  "SecurityHeadersConfig": {
+    "StrictTransportSecurity": {
+      "Override": true,
+      "AccessControlMaxAgeSec": 63072000,
+      "IncludeSubdomains": true,
+      "Preload": false
+    },
+    "ContentTypeOptions": { "Override": true },
+    "FrameOptions": { "Override": true, "FrameOption": "DENY" },
+    "ReferrerPolicy": {
+      "Override": true,
+      "ReferrerPolicy": "strict-origin-when-cross-origin"
+    },
+    "ContentSecurityPolicy": {
+      "Override": true,
+      "ContentSecurityPolicy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://api.mapbox.com https://*.tiles.mapbox.com https://server.arcgisonline.com https://prefire-data.s3.us-east-1.amazonaws.com https://tigerweb.geo.census.gov; connect-src 'self' https://api.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com https://nominatim.openstreetmap.org https://tigerweb.geo.census.gov https://prefire-data.s3.us-east-1.amazonaws.com https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    }
+  },
+  "CustomHeadersConfig": {
+    "Items": [
+      {
+        "Header": "Permissions-Policy",
+        "Value": "camera=(), microphone=(), geolocation=(self), payment=(), usb=()",
+        "Override": true
+      },
+      {
+        "Header": "Cross-Origin-Opener-Policy",
+        "Value": "same-origin",
+        "Override": true
+      }
+    ],
+    "Quantity": 2
+  }
+}
