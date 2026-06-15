@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- TODO(step-12): refactor leaflet/leaflet-draw types, remove file-level disable */
 import { useRef, useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { leafletLayer, PolygonSymbolizer } from "protomaps-leaflet";

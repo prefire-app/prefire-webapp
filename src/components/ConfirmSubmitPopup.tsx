@@ -12,7 +12,7 @@ function ConfirmSubmitPopup({
     state,
     questionnaire,
 }: {
-    drawnPolygons: any[];
+    drawnPolygons: { geometry: unknown }[];
     onClose: () => void;
     fips: string | null;
     state: string;
@@ -61,13 +61,17 @@ function ConfirmSubmitPopup({
                                 : `${drawnPolygons.length} polygons drawn!`}{" "}
                             Submit for analysis?
                         </p>
-                        <label className="block text-[#efefd1] text-sm mb-1">
+                        <label
+                            htmlFor="submit-email"
+                            className="block text-[#efefd1] text-sm mb-1"
+                        >
                             Email address
                             <span className="text-[#d8bd8a] ml-1 text-xs">
                                 (your report will be sent here)
                             </span>
                         </label>
                         <input
+                            id="submit-email"
                             type="email"
                             value={email}
                             onChange={(e) => {

@@ -59,6 +59,7 @@ function getSortedPosts(): Post[] {
 }
 
 export function getAllPosts(): PostMeta[] {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return getSortedPosts().map(({ content: _c, ...meta }) => meta);
 }
 
