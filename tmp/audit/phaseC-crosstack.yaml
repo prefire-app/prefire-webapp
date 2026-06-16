@@ -1,0 +1,160 @@
+findings:
+  - id: cs-001
+    severity: P0
+    category: contract
+    side: fe
+    file: src/components/ConfirmSubmitPopup.tsx:94
+    line: 94
+    evidence: |
+      FE: await axios.post(API_URL, {...}) — response is awaited but **never read**.
+      Returned body { job_id, status: "PENDING" } is discarded; `setSubmitted(true)` runs
+      regardless of returned job_id.
+      BE: POST /send-geometry returns {"job_id": <uuid>, "status": "PENDING"}.
+    fix: |
+      Capture the job_id from the POST response and persist it (state + URL hash).
+      Then poll GET /jobs/{job_id} until status == COMPLETE | FAILED, displaying
+      progress to the user. Without this, the entire async pipeline is invisible
+      to the submitter and BE produces orphan jobs.
+    effort: medium
+    consolidates: [fe shard: error-swallowing in ConfirmSubmitPopup; BE side: GET /jobs/{job_id} is a dead endpoint from FE perspective]
+
+  - id: cs-002
+    severity: P0
+    category: contract
+    side: both
+    file: src/components/ConfirmSubmitPopup.tsx:96 + src/api/routers/send_geometry.py:21
+    line: null
+    evidence: |
+      FE sends: { ...(fips != null && { fips }), state, email, geometry, ...(questionnaire?) }
+      BE requires (Pydantic): { fips: str  ← REQUIRED, geometry: list[dict], state: str = "CA", email?: str, questionnaire?: ... }
+      If FE submits without fips (no state/county selected), BE returns 422 Unprocessable Entity.
+      The FE catches the error and only logs to console — user sees the loading spinner
+      stop with no message, no retry path.
+    fix: |
+      Either:
+      (a) Make `fips` optional on BE (`fips: str | None = None`) and have BE derive it from geometry,
+      (b) OR enforce on FE that the submit button is disabled until fips is set, AND show the
+          422 detail when validation fails.
+      Recommend (b) + surface server validation errors as a banner inside the popup.
+    effort: small
+    consolidates: []
+
+  - id: cs-003
+    severity: P1
+    category: contract
+    side: be
+    file: src/api/routers/send_geometry.py:22
+    line: 22
+    evidence: |
+      `geometry: list[dict]` — no Pydantic model for the GeoJSON shape, no element count cap,
+      no per-polygon vertex cap. FE sends `drawnPolygons.map(p => p.geometry)` so each
+      element is a `Geometry` (not a `Feature`). If FE renames to `.feature`, BE silently
+      stores wrong shape; inference fails downstream with an opaque error.
+    fix: |
+      Define a Pydantic GeoJSONGeometry model with type/coordinates and validate:
+        - type ∈ {"Polygon", "MultiPolygon"}
+        - non-empty coordinates array
+        - max vertices per polygon (e.g. 1000) and max polygons (e.g. 50)
+      This pairs with the BE audit's missing-payload-cap finding (p25-005).
+    effort: small
+    consolidates: [BE audit p25-005 (missing payload size cap)]
+
+  - id: cs-004
+    severity: P1
+    category: contract
+    side: fe
+    file: src/components/ConfirmSubmitPopup.tsx:94
+    line: 94
+    evidence: |
+      No runtime validation of response shape. axios returns `unknown` body; FE never
+      verifies it contains `job_id`. If BE ever changes the response (e.g. renames to
+      `jobId` per JS convention or wraps in `{data: ...}`), FE silently ignores it and
+      polling (if added) breaks at runtime.
+    fix: |
+      Define a Zod schema or TS type-guard and validate the POST response before use:
+        const SubmitResponse = z.object({ job_id: z.string().uuid(), status: z.string() });
+        const body = SubmitResponse.parse(resp.data);
+      Same for GET /jobs/{job_id} once polling is implemented.
+    effort: small
+    consolidates: []
+
+  - id: cs-005
+    severity: P1
+    category: contract
+    side: fe
+    file: src/components/ConfirmSubmitPopup.tsx:108
+    line: 108
+    evidence: |
+      Form error handler:
+        catch (error) { console.error("Error sending geometry to backend:", error); }
+      No user-visible error, no retry button, no status code differentiation (4xx vs 5xx
+      vs network). User clicks "Submit", sees loading stop, has no idea if it worked.
+    fix: |
+      Catch axios errors by status:
+        - 4xx → show validation message from response.data.detail
+        - 5xx / network → show "Server unavailable; try again" with retry button
+      Surface in the existing emailError <p> region or add a generic submitError state.
+    effort: small
+    consolidates: [BE audit: SAS-style auth gap leaves caller anonymous; pairs with cs-001]
+
+  - id: cs-006
+    severity: P1
+    category: contract
+    side: both
+    file: src/lib/constants.ts:2 + infra CORS
+    line: 2
+    evidence: |
+      FE hardcodes prod URL https://wrtzl2rou1.execute-api.us-east-1.amazonaws.com/send-geometry.
+      Local-dev branch (`import.meta.env.NODE_ENV === "local"`) is dead code because Vite
+      does not set NODE_ENV on import.meta.env (uses MODE/DEV/PROD).
+      BE audit found CORS misconfigured. If FE ever ran on a non-prefire.online origin,
+      browser would block; FE currently has no observable error reporting for that case.
+    fix: |
+      FE: replace `import.meta.env.NODE_ENV === "local"` with `import.meta.env.DEV`,
+      and read base URL from `import.meta.env.VITE_API_URL` (already declared in .env.example).
+      BE: pin allow_origins to ["https://prefire.online"] (and the staging origin if any).
+      Add /health endpoint so FE can probe in dev and warn on connectivity failures.
+    effort: trivial
+    consolidates: [FE shard cfg-issues; BE audit dual-layer CORS p25-010]
+
+  - id: cs-007
+    severity: P2
+    category: contract
+    side: be
+    file: src/api/routers/send_geometry.py:78
+    line: 78
+    evidence: |
+      GET /jobs/{job_id} is defined and tested but never called from FE.
+      FE has no polling, no /results page. Either dead code or feature gap.
+    fix: |
+      Either implement FE polling (preferred — completes the user feedback loop, see cs-001)
+      or delete the endpoint until needed. Default: keep, mark as required-by-roadmap, and
+      add it to README.
+    effort: trivial
+    consolidates: [cs-001]
+
+  - id: cs-008
+    severity: P2
+    category: contract
+    side: both
+    file: src/components/AddressSearchPopup.tsx:16 (third-party fetch — Nominatim/OSM)
+    line: 16
+    evidence: |
+      FE fetches geocoding from an unnamed third-party (likely OSM Nominatim) without
+      AbortController, timeout, or rate-limit awareness. Nominatim usage policy requires
+      a custom User-Agent and ≤1 req/sec.
+    fix: |
+      Add a 5s timeout via AbortController, send a `User-Agent: prefire/1.0 (contact@prefire.online)`
+      header (only works server-side; in browser the header is forbidden — so move geocoding
+      to BE: add a thin BE proxy endpoint `/geocode?q=...` that respects Nominatim policy).
+      This is a backend-side enhancement; classified as cross-stack contract.
+    effort: medium
+    consolidates: []
+
+# Summary:
+#   P0: 2 (cs-001 silent submit success, cs-002 required fips mismatch)
+#   P1: 4 (cs-003 BE shape guard, cs-004 FE response validation, cs-005 error UX, cs-006 env wiring)
+#   P2: 2 (cs-007 dead endpoint vs missing FE polling, cs-008 geocoding proxy)
+#   Root cause cluster: "FE treats POST as fire-and-forget; BE has no contract guard."
+#   Single highest-leverage fix: cs-001 + cs-004 together — capture job_id, validate shape,
+#   add polling. This subsumes cs-005's user-feedback gap and cs-007's dead endpoint.

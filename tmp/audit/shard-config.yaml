@@ -1,0 +1,457 @@
+Based on my thorough read-only review of prefire-webapp configuration and deployment files, here are my findings:
+
+```yaml
+findings:
+  - id: sec-001
+    severity: P0
+    category: security
+    file: deploy.sh
+    evidence: |
+      deploy.sh performs S3 sync and CloudFront invalidation but does NOT set ANY security headers
+      on S3 objects or CloudFront response headers. Missing:
+      - Content-Security-Policy (CSP)
+      - X-Content-Type-Options: nosniff
+      - X-Frame-Options / frame-ancestors
+      - Referrer-Policy
+      - Permissions-Policy
+      - Strict-Transport-Security
+      Public SPA serving user-submitted geometry + third-party map libraries with no CSP is
+      a P0 XSS/injection vector.
+    fix: |
+      Add CloudFront Lambda@Edge function or S3 object metadata to inject security headers.
+      Minimum:
+        - X-Content-Type-Options: nosniff
+        - X-Frame-Options: SAMEORIGIN
+        - Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src *; connect-src *
+        - Referrer-Policy: strict-origin-when-cross-origin
+      For CloudFront: use Response Headers Policy or Lambda@Edge edge function before
+      adding S3 sync call to deploy.sh.
+    effort: small
+
+  - id: sec-002
+    severity: P0
+    category: security
+    file: prerender.mjs:20
+    evidence: |
+      buildHeadTags escaping function:
+      const esc = (s) => s.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      
+      Missing escapes:
+      1. Single quotes (') — while HTML attributes use double quotes by convention,
+         malformed attributes could bypass escaping
+      2. Ampersand (&) — if a title contains "&amp;", it will double-encode to "&amp;amp;"
+      3. Incomplete encoding for safe HTML attributes (should also escape backticks in URLs)
+      
+      Example XSS: title = 'value"onmouseover="alert(1)' → produces
+      <title>value&quot;onmouseover=&quot;alert(1)</title> which is safe, but if title
+      later appears in an attribute like <meta property="og:title" content="...">,
+      incomplete escaping could break out.
+    fix: |
+      Use a proper HTML escaping utility. Replace with:
+      const esc = (s) => s
+        .replace(/&/g, "&amp;")  // must be first
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+      
+      OR import from a library: import { escape as escapeHtml } from 'html-escaper';
+    effort: trivial
+
+  - id: sec-003
+    severity: P1
+    category: correctness
+    file: deploy.sh:17-22
+    evidence: |
+      aws s3 sync dist/assets ... and aws s3 sync dist ... do NOT use --sse flag.
+      Objects uploaded without Server-Side Encryption may be stored unencrypted at rest
+      depending on bucket policy. AWS default is now SSE-S3, but explicit flag ensures compliance.
+    fix: |
+      Add --sse AES256 to both s3 sync calls:
+      aws s3 sync dist/assets s3://"$BUCKET"/assets \
+        --cache-control "public, max-age=31536000, immutable" \
+        --sse AES256 \
+        --profile "$AWS_PROFILE" \
+        --delete
+    effort: trivial
+
+  - id: cfg-001
+    severity: P1
+    category: correctness
+    file: deploy.sh:11
+    evidence: |
+      Build runs: npm run build
+      If prerender.mjs fails (e.g., renderToString throws, fs.writeFileSync fails), the
+      exit code is non-zero but deploy.sh does NOT check it. S3 sync proceeds with a
+      partial dist/ (missing pre-rendered routes), and CloudFront gets invalidated with
+      broken HTML.
+      
+      set -euo pipefail is set, but npm run build can succeed with non-zero exit of
+      internal steps if final exit is 0.
+    fix: |
+      Restructure build with explicit error handling:
+      npm run build:client  # vite build only
+      if ! node prerender.mjs; then
+        echo "Pre-rendering failed; aborting deploy." >&2
+        exit 1
+      fi
+      
+      OR use npm's error callback (less portable).
+    effort: small
+
+  - id: cfg-002
+    severity: P1
+    category: correctness
+    file: package.json:37
+    evidence: |
+      "axios": "^1.11.0" is in devDependencies, not dependencies.
+      
+      If src code imports axios at runtime (likely, given the API surface notes),
+      axios will not be installed in production installations (via npm ci --production).
+      This is a known bug per the repo memory.
+    fix: |
+      Move axios to dependencies:
+      "dependencies": {
+        ...
+        "axios": "^1.11.0",
+      },
+      Remove from devDependencies.
+    effort: trivial
+
+  - id: cfg-003
+    severity: P1
+    category: process
+    file: deploy.sh:11
+    evidence: |
+      build script uses: npm run build
+      This implicitly runs npm install if node_modules is missing (npm behavior). For
+      reproducible builds in CI/CD, should use npm ci (clean install) to respect
+      package-lock.json exactly.
+    fix: |
+      Add npm ci before npm run build in deploy.sh (or wrap in a Makefile target):
+      npm ci
+      npm run build
+      
+      Or document in README that deploy.sh assumes node_modules is already installed.
+    effort: trivial
+
+  - id: cfg-004
+    severity: P1
+    category: process
+    file: eslint.config.js
+    evidence: |
+      ESLint extends:
+      - js.configs.recommended
+      - tseslint.configs.recommended
+      - reactHooks.configs['recommended-latest']
+      - reactRefresh.configs.vite
+      
+      MISSING:
+      - eslint-plugin-jsx-a11y (accessibility rules)
+      - eslint-plugin-security (detects unsafe patterns)
+      - eslint-plugin-react (beyond hooks/refresh)
+      
+      Per repo memory: "NO jsx-a11y, NO security plugins." This leaves accessibility
+      and security smells uncaught.
+    fix: |
+      npm install --save-dev eslint-plugin-jsx-a11y eslint-plugin-security eslint-plugin-react
+      
+      Update eslint.config.js:
+      import jsxA11y from 'eslint-plugin-jsx-a11y';
+      import security from 'eslint-plugin-security';
+      import react from 'eslint-plugin-react';
+      
+      export default tseslint.config([
+        ...
+        jsxA11y.configs.recommended,
+        security.configs.recommended,
+        react.configs.recommended,
+      ]);
+    effort: small
+
+  - id: cfg-005
+    severity: P1
+    category: process
+    file: /Users/jacklesemann/prefire/prefire-webapp/.github
+    evidence: |
+      No .github/workflows directory exists. No CI pipeline to enforce:
+      - npm ci && npm run build on every PR
+      - eslint before merge
+      - Type-check (tsc -b) on commits
+      - Pre-commit hooks not configured (no husky detected)
+    fix: |
+      Create .github/workflows/ci.yml with:
+      - npm ci
+      - npm run lint
+      - tsc -b
+      - npm run build
+      
+      Add husky + pre-commit hook:
+      npm install --save-dev husky
+      npx husky install
+      npx husky add .husky/pre-commit "npm run lint && tsc -b"
+    effort: medium
+
+  - id: cfg-006
+    severity: P1
+    category: security
+    file: deploy.sh:42
+    evidence: |
+      deploy.sh hardcodes AWS_PROFILE="prefire-root" if not set in environment.
+      If AWS_PROFILE is leaked (e.g., in logs, shell history) or misconfigured,
+      deploy defaults to a potentially overprivileged root profile.
+    fix: |
+      Require explicit profile:
+      AWS_PROFILE="${AWS_PROFILE:?AWS_PROFILE must be set (typically 'prefire-root')}"
+      
+      This will error instead of silently defaulting.
+    effort: trivial
+
+  - id: cfg-007
+    severity: P1
+    category: correctness
+    file: prerender.mjs:78
+    evidence: |
+      const BASE_URL = "https://prefire.online"; is hardcoded.
+      
+      For staging/preview deployments (e.g., prefire-staging.online), prerender.mjs
+      will generate canonical links pointing to prod, breaking SEO for staging and
+      creating duplicate content issues. env var should override.
+    fix: |
+      const BASE_URL = process.env.BASE_URL || "https://prefire.online";
+      
+      Update package.json build script:
+      "build": "BASE_URL=https://prefire.online tsc -b && vite build && node prerender.mjs"
+    effort: small
+
+  - id: cfg-008
+    severity: P2
+    category: process
+    file: deploy.sh
+    evidence: |
+      No rollback mechanism. If CloudFront invalidation succeeds but S3 upload was partial,
+      or if content is corrupted, there is no way to revert to the previous deployment.
+      deploy.sh does not capture a snapshot of the previous dist/.
+    fix: |
+      Option A: Simple snapshot (low overhead):
+        aws s3 sync s3://"$BUCKET" s3://"$BUCKET"-backup-$(date +%s) --delete
+        (before deploy)
+      
+      Option B: Use deployment versioning with git tags or S3 object versions.
+      
+      Option C: Store dist.tar.gz in a deployments/ prefix:
+        aws s3 cp dist.tar.gz s3://"$BUCKET"/deployments/$(date +%Y%m%d-%H%M%S).tar.gz
+    effort: small
+
+  - id: cfg-009
+    severity: P2
+    category: process
+    file: package.json:14
+    evidence: |
+      "build": "tsc -b && vite build && node prerender.mjs"
+      
+      If any of the three commands fails, npm run build will exit non-zero. But there is
+      no explicit logging or health check to verify the build succeeded before deploy.sh
+      proceeds. A failure in prerender.mjs (e.g., out of memory, fs error) is silently
+      consumed if deploy.sh doesn't check $?.
+    fix: |
+      Add explicit checks in deploy.sh:
+      echo "==> Building for production..."
+      if ! npm run build; then
+        echo "Build failed. Aborting deploy." >&2
+        exit 1
+      fi
+    effort: trivial
+
+  - id: cfg-010
+    severity: P2
+    category: security
+    file: .gitignore line 16
+    evidence: |
+      .gitignore covers .env and .env.production, but does not explicitly exclude
+      .env.staging or .env.qa. If developer creates .env.staging with secrets, it
+      might be accidentally committed if the pattern is not obvious.
+    fix: |
+      Expand .gitignore:
+      .env
+      .env.local
+      .env.*.local
+      .env.production
+    effort: trivial
+
+  - id: dx-001
+    severity: P2
+    category: dx
+    file: eslint.config.js:7
+    evidence: |
+      ESLint globalIgnores only ignores 'dist'. Should also exclude:
+      - prerender.mjs (Node.js build script, not browser code)
+      - vite.config.ts (already in tsconfig.node.json, but ESLint doesn't know)
+      - infra/ or any IaC folder if present (not applicable here, but good practice)
+    fix: |
+      Update globalIgnores:
+      import { globalIgnores } from 'eslint/config'
+      
+      export default tseslint.config([
+        globalIgnores(['dist', 'dist-ssr', 'prerender.mjs', 'vite.config.ts']),
+        ...
+      ]);
+    effort: trivial
+
+  - id: cfg-011
+    severity: P2
+    category: correctness
+    file: vite.config.ts
+    evidence: |
+      vite.config.ts does NOT explicitly set build.sourcemap: false. While Vite defaults
+      to false in production, explicit configuration is safer for future maintainers
+      and prevents accidental debug sourcemap leaks if a build tool defaults change.
+    fix: |
+      Add to build config:
+      build: {
+        sourcemap: false,  // explicitly disable sourcemaps in prod
+        rollupOptions: { ... }
+      }
+    effort: trivial
+
+  - id: cfg-012
+    severity: P2
+    category: security
+    file: vite.config.ts, index.html
+    evidence: |
+      vite.config.ts does not define a CSP nonce strategy. index.html has inline
+      <script type="module" src="/src/main.tsx"></script> which is a module import, not
+      an inline script, but no nonce attribute. If a strict CSP is deployed (e.g.,
+      script-src 'self' with nonce), this import will be blocked unless Vite is configured
+      to inject nonce into module script tags.
+    fix: |
+      Implement CSP nonce:
+      1. In deploy.sh or CloudFront Lambda@Edge, generate nonce and inject into headers
+      2. Update vite.config.ts to use @vitejs/plugin-create-use-atom or custom plugin
+         to inject nonce into module scripts
+      3. Alternatively, use script-src 'self' 'unsafe-inline' (less strict) or
+         script-src-elem for module scripts
+      For now, document that CSP should NOT include 'unsafe-inline' for scripts until
+      nonce strategy is implemented.
+    effort: medium
+
+  - id: cfg-013
+    severity: P3
+    category: process
+    file: deploy.sh:42
+    evidence: |
+      CloudFront cache invalidation always uses --paths "/*" which invalidates ALL
+      paths globally. This is correct for safety but incurs CloudFront charges per
+      invalidation. For large deployments, could optimize by tracking changed files
+      and invalidating only those.
+    fix: |
+      Optional: Track changed files and generate minimal invalidation path list:
+      CHANGED=$(git diff HEAD~1 --name-only | grep -E '^dist/' | sed 's|^dist||')
+      aws cloudfront create-invalidation \
+        --paths $(echo "$CHANGED" | head -3000) \
+        ...
+      
+      CloudFront allows up to 3000 paths per invalidation. This is a nice-to-have optimization.
+    effort: small
+
+  - id: cfg-014
+    severity: P3
+    category: process
+    file: deploy.sh
+    evidence: |
+      deploy.sh does not verify the structure or integrity of dist/ before uploading.
+      For example, it doesn't check that index.html exists, that public/robots.txt was
+      copied, or that prerender.mjs generated all expected blog post index.html files.
+    fix: |
+      Add basic sanity checks before S3 sync:
+      if [[ ! -f dist/index.html ]]; then
+        echo "ERROR: dist/index.html not found. Build may have failed." >&2
+        exit 1
+      fi
+      if [[ ! -f dist/robots.txt ]]; then
+        echo "ERROR: dist/robots.txt not found. Public assets not copied." >&2
+        exit 1
+      fi
+    effort: trivial
+
+  - id: cfg-015
+    severity: P3
+    category: security
+    file: .env.example
+    evidence: |
+      .env.example includes keys for REACT_APP_GOOGLE_MAPS_API_KEY and VITE_MAPBOX_TOKEN.
+      While these are placeholders, their presence signals to attackers where to look for
+      API keys. This is low-risk since keys are frontend-public anyway, but worth noting
+      for sensitive keys in the future.
+    fix: |
+      Document clearly in .env.example and README:
+      # Mapbox public token (pk.…). Safe to commit to .env because it's frontend-public.
+      # Lock down token with URL restrictions in the Mapbox dashboard.
+      VITE_MAPBOX_TOKEN=your_mapbox_public_token_here
+      
+      # Google Maps API key. Frontend-only, but disable Maps JavaScript API if not used.
+      REACT_APP_GOOGLE_MAPS_API_KEY=your_key_here
+    effort: trivial
+
+  - id: cfg-016
+    severity: P3
+    category: correctness
+    file: prerender.mjs:56
+    evidence: |
+      blogPostRoutes are discovered from src/blog/posts/*.md by reading frontmatter.
+      If a blog post file is deleted but its generated dist/blog/slug/index.html still
+      exists from a prior build, prerender.mjs will not clean it up. This could result
+      in stale HTML being served for deleted posts.
+    fix: |
+      Add cleanup before pre-rendering:
+      // Remove old pre-rendered blog posts
+      const oldBlogDir = toAbsolute("dist/blog");
+      if (fs.existsSync(oldBlogDir)) {
+        fs.rmSync(oldBlogDir, { recursive: true });
+      }
+      
+      This ensures only posts in src/blog/posts are rendered.
+    effort: small
+
+  - id: cfg-017
+    severity: P3
+    category: dx
+    file: deploy.sh
+    evidence: |
+      deploy.sh output says:
+      "Deployed to: http://$BUCKET.s3-website-us-east-1.amazonaws.com"
+      
+      But actual live URL is behind CloudFront. S3 website endpoint should only be used
+      for testing. Output is misleading.
+    fix: |
+      Update output message:
+      if [[ -n "$CF_DIST" ]]; then
+        echo "Deployed to: https://prefire.online (CloudFront)"
+      else
+        echo "Deployed to: http://$BUCKET.s3-website-us-east-1.amazonaws.com (S3 direct)"
+      fi
+    effort: trivial
+
+  - id: cfg-018
+    severity: P3
+    category: process
+    file: vite.config.ts
+    evidence: |
+      vite.config.ts manualChunks includes leaflet-draw in the leaflet chunk, which is
+      correct. However, there is no documented reason or comment explaining why these
+      libraries are grouped. If a maintainer adds a new large dependency, they may not
+      know whether to add it to an existing chunk or create a new one.
+    fix: |
+      Add comment explaining chunking strategy:
+      manualChunks: {
+        // Long-term stable libraries: grouped to maintain consistent hash across deploys
+        react: ["react", "react-dom", "react-router-dom"],
+        // Map libraries: heavy and rarely updated; grouped for better caching
+        leaflet: ["leaflet", "react-leaflet", "leaflet-draw"],
+      },
+    effort: trivial
+```
+
+---
+
+**Summary**: 18 findings identified. **P0 (2)**: No security headers (critical XSS/injection vector) and incomplete HTML escaping in prerender. **P1 (6)**: Missing SSE, build error handling, axios misclassification, missing linting plugins, no CI, hardcoded AWS profile. **P2 (7)**: No rollback, build verification, .gitignore gaps, CSP nonce, missing sourcemap config, globalIgnores scope. **P3 (3)**: Optimization and hygiene. The headline issue is **`deploy.sh` and the SPA have zero security headers** — add CloudFront Lambda@Edge or Response Headers Policy before the S3 sync call.
