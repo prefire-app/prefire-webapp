@@ -5,7 +5,7 @@ const links = [
     { to: "/map", label: "Analyzer" },
     { to: "/about", label: "About" },
     { to: "/blog", label: "Blog" },
-    { to: "/donate", label: "Donate" },
+    { to: "/donate", label: "Support" },
 ];
 
 function NavBar() {

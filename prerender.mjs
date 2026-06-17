@@ -19,6 +19,7 @@ const BASE_URL = "https://prefire.online";
 function buildHeadTags({ title, description, canonical }) {
     const esc = (s) => s.replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     return [
+        // Override the default <title> set in index.html
         `<title>${esc(title)}</title>`,
         `<meta name="description" content="${esc(description)}" />`,
         `<link rel="canonical" href="${canonical}" />`,
@@ -137,6 +138,20 @@ const routes = [
         title: "California Wildfire Resources — Defensible Space & Regulations | Prefire",
         description: "California-specific wildfire defensible space resources: PRC § 4291, AB 3074, CAL FIRE Fire Hazard Severity Zones (regulatory context), and how Prefire uses USFS Wildfire Hazard Potential (WHP) to score CA properties.",
         canonical: `${BASE_URL}/learning/california`,
+    },
+    {
+        url: "/legal/terms",
+        outFile: "dist/legal/terms/index.html",
+        title: "Terms of Use | Prefire",
+        description: "Terms of use and disclaimers for Prefire's free wildfire defensible space tool.",
+        canonical: `${BASE_URL}/legal/terms`,
+    },
+    {
+        url: "/legal/privacy",
+        outFile: "dist/legal/privacy/index.html",
+        title: "Privacy Policy | Prefire",
+        description: "How Prefire handles the small amount of data you share. No cookies, no analytics, 7-day retention.",
+        canonical: `${BASE_URL}/legal/privacy`,
     },
     ...blogPostRoutes,
 ];

@@ -13,8 +13,9 @@ const app = (
   </React.StrictMode>
 );
 
-// Hydrate pre-rendered HTML if present, otherwise do a fresh render (e.g. /map)
-if (rootElement.innerHTML.trim() !== "") {
+// Hydrate pre-rendered HTML if present, otherwise do a fresh render (e.g. /map
+// or any dev-server response where index.html still has the SSR placeholder comment).
+if (rootElement.children.length > 0) {
   hydrateRoot(rootElement, app);
 } else {
   createRoot(rootElement).render(app);

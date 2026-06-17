@@ -1,56 +1,18 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import { leafletLayer, PolygonSymbolizer } from "protomaps-leaflet";
+import type { Feature, Polygon } from "geojson";
 
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import L from "leaflet";
 import "leaflet-draw";
-import type {
-    Feature,
-    FeatureCollection,
-    Polygon as GeoJSONPolygon,
-} from "geojson";
 import AddressSearchPopup from "./AddressSearchPopup";
 import AnalyzerGuide from "./AnalyzerGuide";
 import ConfirmSubmitPopup from "./ConfirmSubmitPopup";
 import QuestionnairePopup from "./QuestionnairePopup";
-import StateCountySelector from "./StateCountySelector";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
-import { TIGERWEB_URL, PMTILES_BASE_URL, BUILDING_MIN_ZOOM, CA_CENTER, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION, MAX_POLYGONS_PER_REQUEST, MAX_VERTICES_PER_POLYGON } from "../lib/constants";
-import { STATES } from "../lib/geo";
-
-function CountyBoundary({
-    geojson,
-}: {
-    geojson: FeatureCollection | Feature | null;
-}) {
-    const map = useMap();
-    const layerRef = useRef<L.GeoJSON | null>(null);
-
-    useEffect(() => {
-        if (!geojson) return;
-
-        layerRef.current = L.geoJSON(geojson, {
-            style: {
-                color: "#D8BD8A",
-                weight: 2.5,
-                fillColor: "#D8BD8A",
-                fillOpacity: 0.08,
-            },
-        });
-        layerRef.current.addTo(map);
-
-        return () => {
-            if (layerRef.current) {
-                map.removeLayer(layerRef.current);
-                layerRef.current = null;
-            }
-        };
-    }, [map, geojson]);
-
-    return null;
-}
+import { PMTILES_BASE_URL, BUILDING_MIN_ZOOM, MAPBOX_SATELLITE_URL, MAPBOX_STREETS_URL, MAPBOX_ATTRIBUTION, CA_CENTER } from "../lib/constants";
 
 function PMTilesBuildingsLayer({
     stateFips,
@@ -67,7 +29,7 @@ function PMTilesBuildingsLayer({
 
         const url = `${PMTILES_BASE_URL}${stateFips}.pmtiles`;
 
-        const layer = leafletLayer({
+        const pmLayer = leafletLayer({
             url,
             maxDataZoom: 15,
             paintRules: [
@@ -82,8 +44,8 @@ function PMTilesBuildingsLayer({
             ],
             labelRules: [],
         }) as unknown as L.Layer;
-        layerRef.current = layer;
-        layer.addTo(map);
+        layerRef.current = pmLayer;
+        pmLayer.addTo(map);
 
         return () => {
             if (layerRef.current) {
@@ -113,14 +75,15 @@ function LeafletDrawControls({
     onPolygonDrawn,
     onClearRef,
 }: {
-    onPolygonDrawn: (geojson: Feature<GeoJSONPolygon>) => void;
+    onPolygonDrawn: (geojson: Feature<Polygon>) => void;
     onClearRef: (clearFn: () => void) => void;
 }) {
     const map = useMap();
-    const drawnItemsRef = useRef<L.FeatureGroup>(new L.FeatureGroup());
+    const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
+    if (!drawnItemsRef.current) drawnItemsRef.current = new L.FeatureGroup();
 
     useEffect(() => {
-        const drawnItems = drawnItemsRef.current;
+        const drawnItems = drawnItemsRef.current!;
         map.addLayer(drawnItems);
         onClearRef(() => drawnItems.clearLayers());
 
@@ -142,10 +105,9 @@ function LeafletDrawControls({
         map.addControl(drawControl);
 
         function handleCreated(event: L.LeafletEvent) {
-            const created = event as L.DrawEvents.Created;
-            const layer = created.layer;
+            const layer = (event as L.DrawEvents.Created).layer;
             drawnItems.addLayer(layer);
-            const geojson = (layer as L.Polygon).toGeoJSON() as Feature<GeoJSONPolygon>;
+            const geojson = (layer as L.Polygon).toGeoJSON() as Feature<Polygon>;
             onPolygonDrawn(geojson);
         }
 
@@ -164,18 +126,13 @@ function LeafletDrawControls({
 export default function MappingTool() {
     const mapRef = useRef<L.Map | null>(null);
     const [showGuide, setShowGuide] = useState(true);
-    const [setupComplete, setSetupComplete] = useState(false);
-    const [showSelector, setShowSelector] = useState(false);
     const [showModal, setShowModal] = useState(false);
-    const [selectedFips, setSelectedFips] = useState<string | null>(null);
+    const [selectedCountyFips, setSelectedCountyFips] = useState<string | null>(null);
     const [selectedStateFips, setSelectedStateFips] = useState<string | null>(
         null,
     );
     const [selectedStateCode, setSelectedStateCode] = useState<string | null>(null);
-    const [countyGeoJSON, setCountyGeoJSON] = useState<FeatureCollection | null>(null);
-    const [geometryLoading, setGeometryLoading] = useState(false);
-    const [mapCenter, setMapCenter] = useState<[number, number]>(CA_CENTER);
-    const [drawnPolygons, setDrawnPolygons] = useState<Feature<GeoJSONPolygon>[]>([]);
+    const [drawnPolygons, setDrawnPolygons] = useState<Feature<Polygon>[]>([]);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
     const [questionnaireAnswers, setQuestionnaireAnswers] = useState<QuestionnaireAnswers | null>(null);
@@ -184,38 +141,20 @@ export default function MappingTool() {
     const [showDataNote, setShowDataNote] = useState(true);
     const [mapZoom, setMapZoom] = useState(10);
 
-    const isBlocked = showGuide || showSelector || showModal || showQuestionnaire;
+    const isBlocked = showGuide || showModal || showQuestionnaire;
+
+    useEffect(() => {
+        const previous = document.title;
+        document.title = "Map \u2014 Prefire";
+        return () => {
+            document.title = previous;
+        };
+    }, []);
 
     const clearDrawnLayers = useRef<() => void>(() => {});
 
-    const [drawError, setDrawError] = useState<string | null>(null);
-    const [tileError, setTileError] = useState<string | null>(null);
-
-    const handlePolygonDrawn = useCallback((geojson: Feature<GeoJSONPolygon>) => {
-        setDrawnPolygons((prev) => {
-            if (prev.length >= MAX_POLYGONS_PER_REQUEST) {
-                setDrawError(
-                    `Limit of ${MAX_POLYGONS_PER_REQUEST} polygons reached. Remove one before drawing another.`,
-                );
-                return prev;
-            }
-            const rings: number[][][] | undefined =
-                geojson?.geometry?.coordinates;
-            if (Array.isArray(rings)) {
-                const totalVertices = rings.reduce(
-                    (sum, ring) => sum + (Array.isArray(ring) ? ring.length : 0),
-                    0,
-                );
-                if (totalVertices > MAX_VERTICES_PER_POLYGON) {
-                    setDrawError(
-                        `Polygon has ${totalVertices} vertices; max is ${MAX_VERTICES_PER_POLYGON}. Try a simpler shape.`,
-                    );
-                    return prev;
-                }
-            }
-            setDrawError(null);
-            return [...prev, geojson];
-        });
+    const handlePolygonDrawn = useCallback((geojson: Feature<Polygon>) => {
+        setDrawnPolygons((prev) => [...prev, geojson]);
     }, []);
 
     const handleMoveMap = (lat: number, lng: number) => {
@@ -227,13 +166,12 @@ export default function MappingTool() {
     return (
         <div className="relative h-full flex flex-col p-6 md:p-12 md:pb-14 max-w-4xl mx-auto">
             <MapContainer
-                center={mapCenter}
-                zoom={10}
+                center={CA_CENTER}
+                zoom={5}
                 maxZoom={22}
                 className="flex-1 min-h-0 w-full rounded-lg shadow-lg border border-5 border-[#D8BD8A]"
                 style={{ zIndex: 0 }}
                 ref={mapRef}
-                whenReady={() => {}}
             >
                 {layer === "mapbox" && MAPBOX_SATELLITE_URL ? (
                     <TileLayer
@@ -243,12 +181,6 @@ export default function MappingTool() {
                         zoomOffset={-1}
                         maxNativeZoom={22}
                         maxZoom={22}
-                        eventHandlers={{
-                            tileerror: () =>
-                                setTileError(
-                                    "Failed to load map tiles. Check your connection or switch base layers.",
-                                ),
-                        }}
                     />
                 ) : layer === "topo" ? (
                     MAPBOX_STREETS_URL ? (
@@ -259,12 +191,6 @@ export default function MappingTool() {
                             zoomOffset={-1}
                             maxNativeZoom={22}
                             maxZoom={22}
-                            eventHandlers={{
-                                tileerror: () =>
-                                    setTileError(
-                                        "Failed to load map tiles. Check your connection or switch base layers.",
-                                    ),
-                            }}
                         />
                     ) : (
                         <TileLayer
@@ -272,12 +198,6 @@ export default function MappingTool() {
                             attribution='Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
                             maxNativeZoom={19}
                             maxZoom={22}
-                            eventHandlers={{
-                                tileerror: () =>
-                                    setTileError(
-                                        "Failed to load map tiles. Check your connection or switch base layers.",
-                                    ),
-                            }}
                         />
                     )
                 ) : (
@@ -286,12 +206,6 @@ export default function MappingTool() {
                         attribution='Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, USDA, USGS, AeroGRID, IGN, and the GIS User Community'
                         maxNativeZoom={19}
                         maxZoom={22}
-                        eventHandlers={{
-                            tileerror: () =>
-                                setTileError(
-                                    "Failed to load map tiles. Check your connection or switch base layers.",
-                                ),
-                        }}
                     />
                 )}
                 <PMTilesBuildingsLayer stateFips={selectedStateFips} visible={showBuildings} />
@@ -300,138 +214,25 @@ export default function MappingTool() {
                     onPolygonDrawn={handlePolygonDrawn}
                     onClearRef={(fn) => { clearDrawnLayers.current = fn; }}
                 />
-                {selectedFips && selectedStateFips && countyGeoJSON && (
-                    <CountyBoundary geojson={countyGeoJSON} />
-                )}
             </MapContainer>
-            {(showGuide || showSelector) && (
-                <div className="fixed inset-0 bg-black opacity-50 z-10"></div>
-            )}
             {showGuide && (
-                <div className="fixed inset-0 flex items-center justify-center z-20">
-                    <AnalyzerGuide
-                        onDismiss={() => {
-                            setShowGuide(false);
-                            if (!setupComplete) {
-                                setShowSelector(true);
-                            }
-                        }}
-                    />
-                </div>
-            )}
-            {showSelector && (
-                <div className="fixed inset-0 flex items-center justify-center z-20">
-                    <StateCountySelector
-                        onConfirm={async (sel) => {
-                            setSelectedStateFips(sel.stateFips);
-                            setSelectedStateCode(sel.stateCode);
-                            setSelectedFips(sel.countyFips);
-                            setCountyGeoJSON(null);
-                            setShowSelector(false);
-                            setSetupComplete(true);
-
-                            const stateInfo = STATES.find((s) => s.code === sel.stateCode);
-                            const stateCentroid = stateInfo?.centroid ?? CA_CENTER;
-
-                            // No county: pan to state centroid and skip the geometry fetch
-                            if (!sel.countyFips) {
-                                setMapCenter(stateCentroid);
-                                if (mapRef.current) {
-                                    mapRef.current.setView(stateCentroid, 8);
-                                }
-                                setShowModal(true);
-                                return;
-                            }
-
-                            setGeometryLoading(true);
-                            try {
-                                const params = new URLSearchParams({
-                                    where: `STATE='${sel.stateFips}' AND COUNTY='${sel.countyFips}'`,
-                                    outFields: "NAME",
-                                    geometryPrecision: "5",
-                                    f: "geojson",
-                                    outSR: "4326",
-                                });
-                                const res = await fetch(`${TIGERWEB_URL}?${params}`);
-                                const data = await res.json();
-                                setCountyGeoJSON(data);
-
-                                // Pan to county bbox centroid
-                                let centroid = stateCentroid;
-                                const coords =
-                                    data?.features?.[0]?.geometry?.coordinates;
-                                if (coords) {
-                                    const flat: number[][] = [];
-                                    const walk = (node: unknown): void => {
-                                        if (
-                                            Array.isArray(node) &&
-                                            typeof node[0] === "number"
-                                        ) {
-                                            flat.push(node as number[]);
-                                        } else if (Array.isArray(node)) {
-                                            node.forEach(walk);
-                                        }
-                                    };
-                                    walk(coords);
-                                    if (flat.length > 0) {
-                                        const lngs = flat.map((c) => c[0]);
-                                        const lats = flat.map((c) => c[1]);
-                                        centroid = [
-                                            (Math.min(...lats) + Math.max(...lats)) / 2,
-                                            (Math.min(...lngs) + Math.max(...lngs)) / 2,
-                                        ];
-                                    }
-                                }
-                                setMapCenter(centroid);
-                                if (mapRef.current) {
-                                    mapRef.current.setView(centroid, 11);
-                                }
-                            } catch {
-                                // Fall back to state centroid on failure
-                                setMapCenter(stateCentroid);
-                                if (mapRef.current) {
-                                    mapRef.current.setView(stateCentroid, 8);
-                                }
-                            } finally {
-                                setGeometryLoading(false);
-                                setShowModal(true);
-                            }
-                        }}
-                    />
-                </div>
-            )}
-            {geometryLoading && (
-                <div className="absolute inset-6 md:inset-12 md:bottom-14 z-20 flex items-center justify-center pointer-events-none">
-                    <div className="flex items-center gap-3 bg-[#aa5042] border border-[#D8BD8A] rounded px-4 py-2 shadow-lg">
-                        <svg
-                            className="animate-spin h-5 w-5 text-[#efefd1]"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                            />
-                            <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                            />
-                        </svg>
-                        <span className="text-[#efefd1] text-sm">
-                            Loading county boundary…
-                        </span>
-                    </div>
-                </div>
+                <AnalyzerGuide
+                    onDismiss={() => {
+                        setShowGuide(false);
+                        setShowModal(true);
+                    }}
+                />
             )}
             {showModal && (
                 <AddressSearchPopup
-                    onClose={() => setShowModal(false)}
+                    onClose={(area) => {
+                        setShowModal(false);
+                        if (area) {
+                            setSelectedStateFips(area.stateFips);
+                            setSelectedStateCode(area.stateCode);
+                            setSelectedCountyFips(area.countyFips);
+                        }
+                    }}
                     onSearch={handleMoveMap}
                 />
             )}
@@ -480,36 +281,6 @@ export default function MappingTool() {
                         </button>
                     </div>
                 )}
-                {drawError && (
-                    <div
-                        role="alert"
-                        className="absolute top-20 right-4 pointer-events-auto max-w-xs bg-yellow-200 border border-yellow-500 text-yellow-900 rounded px-3 py-2 shadow-lg text-xs"
-                    >
-                        <button
-                            onClick={() => setDrawError(null)}
-                            aria-label="Dismiss warning"
-                            className="absolute top-0.5 right-1.5 opacity-60 hover:opacity-100 text-xs"
-                        >
-                            ✕
-                        </button>
-                        <p className="pr-3">{drawError}</p>
-                    </div>
-                )}
-                {tileError && (
-                    <div
-                        role="alert"
-                        className="absolute top-4 left-4 pointer-events-auto max-w-xs bg-yellow-200 border border-yellow-500 text-yellow-900 rounded px-3 py-2 shadow-lg text-xs"
-                    >
-                        <button
-                            onClick={() => setTileError(null)}
-                            aria-label="Dismiss tile error"
-                            className="absolute top-0.5 right-1.5 opacity-60 hover:opacity-100 text-xs"
-                        >
-                            ✕
-                        </button>
-                        <p className="pr-3">{tileError}</p>
-                    </div>
-                )}
                 {/* Help button */}
                 {!showGuide && (
                     <button
@@ -520,6 +291,17 @@ export default function MappingTool() {
                         }`}
                     >
                         ?
+                    </button>
+                )}
+                {/* Re-open address search (visible after dismissal or to change address) */}
+                {!showModal && !showGuide && (
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className={`absolute top-4 left-20 pointer-events-auto px-3 py-1.5 text-xs md:text-sm font-medium rounded shadow-lg bg-[#aa5042] border border-[#D8BD8A] text-[#efefd1] hover:bg-[#c0604e] transition-colors transition-opacity ${
+                            isBlocked ? "opacity-50 pointer-events-none" : ""
+                        }`}
+                    >
+                        {selectedStateFips ? "Change address" : "Search address"}
                     </button>
                 )}
                 {/* Layer dropdown */}
@@ -571,12 +353,12 @@ export default function MappingTool() {
                     }}
                 />
             )}
-            {showConfirm && selectedStateFips && (
+            {showConfirm && (
                 <ConfirmSubmitPopup
                     drawnPolygons={drawnPolygons}
                     onClose={() => setShowConfirm(false)}
-                    fips={selectedFips}
-                    state={selectedStateCode ?? "CA"}
+                    fips={selectedCountyFips}
+                    state={selectedStateCode}
                     questionnaire={questionnaireAnswers}
                 />
             )}

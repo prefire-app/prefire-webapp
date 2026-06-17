@@ -30,6 +30,7 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; content:
         if (colon === -1) continue;
         const key = line.slice(0, colon).trim();
         const value = line.slice(colon + 1).trim();
+        // eslint-disable-next-line security/detect-object-injection -- key parsed from build-time markdown frontmatter
         if (key) data[key] = value;
     }
     return { data, content: match[2] };

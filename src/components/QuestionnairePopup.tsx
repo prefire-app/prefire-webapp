@@ -12,6 +12,7 @@ export default function QuestionnairePopup({
     const [zoneIndex, setZoneIndex] = useState(0);
     const [answers, setAnswers] = useState<QuestionnaireAnswers>({ ...EMPTY_ANSWERS });
 
+    // eslint-disable-next-line security/detect-object-injection -- zoneIndex is bounded internal state
     const currentZone = ZONES[zoneIndex];
     const isLastZone = zoneIndex === ZONES.length - 1;
 
@@ -65,7 +66,7 @@ export default function QuestionnairePopup({
                     ))}
                 </div>
                 <p className="text-[#d8bd8a] text-xs mt-2 font-medium">
-                    {currentZone.label}{" "}
+                    Zone {zoneIndex + 1} of {ZONES.length}: {currentZone.label}{" "}
                     <span className="text-[#efefd1]/55 font-normal">
                         ({currentZone.rangeLabel})
                     </span>

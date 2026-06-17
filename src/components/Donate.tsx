@@ -1,4 +1,4 @@
-const VENMO_URL = "https://venmo.com/u/Jack-Lesemann"; // TODO: replace with your Venmo username
+const VENMO_URL = "https://venmo.com/u/Jack-Lesemann"; // TODO: switch to Venmo business profile URL
 
 export default function Donate() {
     return (
@@ -12,9 +12,9 @@ export default function Donate() {
                 insurance companies like other tools.
             </p>
             <p className="text-[#efefd1] opacity-80 text-lg max-w-xl mb-10">
-                If this tool has been useful to you, consider buying us a
-                coffee. Every dollar goes toward keeping the servers running and
-                expanding to more counties and states.
+                If this tool has been useful to you, consider chipping in. Every
+                dollar goes toward keeping the servers running and expanding to
+                more counties and states.
             </p>
             <a
                 href={VENMO_URL}
@@ -29,10 +29,16 @@ export default function Donate() {
                 >
                     <path d="M40.1 6c1.7 2.8 2.5 5.7 2.5 9.3 0 11.6-9.9 26.6-17.9 37.2H8.2L2 9.4l15.1-1.4 3.2 24.7c3-4.9 6.7-12.6 6.7-17.8 0-2.9-.5-4.8-1.3-6.5L40.1 6z" />
                 </svg>
-                Donate via Venmo
+                Support via Venmo
             </a>
             <p className="text-[#efefd1] opacity-40 text-sm mt-6">
                 Venmo: @Jack-Lesemann
+            </p>
+            <p className="text-[#efefd1]/60 text-xs max-w-xl mt-8 leading-relaxed">
+                Prefire is an independent project, not a registered 501(c)(3)
+                nonprofit. Contributions are personal gifts to the operator,
+                are not tax-deductible, and no goods or services are provided
+                in exchange.
             </p>
         </div>
     );

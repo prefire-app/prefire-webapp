@@ -19,6 +19,7 @@ function StateCountySelector({
     const [selectedCounty, setSelectedCounty] = useState<CountyRef | null>(null);
 
     const counties = useMemo(
+        // eslint-disable-next-line security/detect-object-injection -- selectedState is chosen from STATES list
         () => (selectedState ? COUNTIES_BY_STATE[selectedState] ?? [] : []),
         [selectedState],
     );

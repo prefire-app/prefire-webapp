@@ -1,9 +1,0 @@
-[
-  {
-    "id": "document-title",
-    "impact": "serious",
-    "help": "Documents must have <title> element to aid in navigation",
-    "tags": ["cat.text-alternatives","wcag2a","wcag242"],
-    "nodes": [{"target":["html"],"html":"<html lang=\"en\">","failureSummary":"Document does not have a non-empty <title> element"}]
-  }
-]

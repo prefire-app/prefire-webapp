@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
+import Modal from "./Modal";
 
 const pages: { title: string; content: React.ReactNode }[] = [
     {
@@ -220,7 +221,8 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
           };
 
     return (
-        <div className="bg-[#2a1a1a] border border-[#D8BD8A] rounded-xl shadow-2xl w-full max-w-md mx-4 flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 160px)" }}>
+        <Modal isOpen={true} onClose={onDismiss} title="Analyzer Guide">
+        <div className="bg-[#2a1a1a] border border-[#D8BD8A] rounded-xl shadow-2xl w-full flex flex-col overflow-hidden" style={{ maxHeight: "calc(100vh - 160px)" }}>
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#D8BD8A] border-opacity-30">
                 <span className="text-[#D8BD8A] text-xs font-semibold uppercase tracking-widest">
@@ -323,5 +325,6 @@ export default function AnalyzerGuide({ onDismiss }: AnalyzerGuideProps) {
                 </div>
             </div>
         </div>
+        </Modal>
     );
 }

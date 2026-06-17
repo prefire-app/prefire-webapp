@@ -1,19 +1,13 @@
 import { useState } from "react";
 import Modal from "./Modal";
-import { GEOCODE_URL } from "../lib/constants";
+import { LOCATE_URL } from "../lib/constants";
 import { apiFetch, ApiError, ApiTimeoutError } from "../lib/api";
+import type { CountyState, LocateResponse } from "../types/locate";
 
 type Props = {
-    onClose: () => void;
+    onClose: (area: CountyState | null) => void;
     onSearch: (lat: number, lng: number) => void;
 };
-
-type GeocodeResult = {
-    lat: number;
-    lon: number;
-    display_name: string;
-};
-type GeocodeResponse = { results: GeocodeResult[] };
 
 function AddressSearchPopup({ onClose, onSearch }: Props) {
     const [address, setAddress] = useState("");
@@ -29,20 +23,21 @@ function AddressSearchPopup({ onClose, onSearch }: Props) {
         setError(null);
         setLoading(true);
         try {
-            const url = `${GEOCODE_URL}?address=${encodeURIComponent(trimmed)}`;
-            const data = await apiFetch<GeocodeResponse>(url, {
-                timeoutMs: 6000,
+            const url = `${LOCATE_URL}?address=${encodeURIComponent(trimmed)}`;
+            const data = await apiFetch<LocateResponse>(url, { timeoutMs: 6000 });
+            onSearch(data.lat, data.lon);
+            onClose({
+                stateCode: data.stateCode,
+                stateFips: data.stateFips,
+                countyFips: data.countyFips,
+                countyName: data.countyName,
+                supported: data.supported,
             });
-            if (data.results.length > 0) {
-                const { lat, lon } = data.results[0];
-                onSearch(lat, lon);
-                onClose();
-            } else {
-                setError("Address not found.");
-            }
         } catch (err) {
             if (err instanceof ApiTimeoutError) {
                 setError("Search timed out. Please try again.");
+            } else if (err instanceof ApiError && err.status === 404) {
+                setError("Address not found. Try adding city and state.");
             } else if (err instanceof ApiError && err.status === 429) {
                 setError("Too many searches. Please wait a moment.");
             } else {
@@ -54,11 +49,11 @@ function AddressSearchPopup({ onClose, onSearch }: Props) {
     };
 
     return (
-        <Modal isOpen={true} onClose={onClose} title="Search Address">
+        <Modal isOpen={true} onClose={() => onClose(null)} title="Search Address">
             <div className="bg-[#aa5042] rounded shadow-lg p-6 max-w-md w-full relative">
                 <button
                     className="absolute top-3 right-5 text-[#efefd1] hover:text-gray-700"
-                    onClick={onClose}
+                    onClick={() => onClose(null)}
                     aria-label="Close address search"
                 >
                     &times;
@@ -66,9 +61,14 @@ function AddressSearchPopup({ onClose, onSearch }: Props) {
                 <h2 className="text-[#efefd1] text-lg font-bold mb-2">
                     Search Address
                 </h2>
+                <p className="text-[#efefd1]/70 text-xs leading-snug mb-3">
+                    For best results, include street number, street, city, and state e.g.,{" "}
+                    <span className="text-[#d8bd8a] font-medium">2927 W 34th Ave, Denver, CO</span>.
+                    If your address isn&rsquo;t found, try a nearby intersection or landmark.
+                </p>
                 <input
                     type="text"
-                    placeholder="Enter address"
+                    placeholder="123 Main St, City, ST"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     onKeyDown={(e) => {

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import type { QuestionnaireAnswers } from "../types/questionnaire";
 import { API_URL } from "../lib/constants";
 import Modal from "./Modal";
@@ -15,7 +15,7 @@ function ConfirmSubmitPopup({
     drawnPolygons: { geometry: unknown }[];
     onClose: () => void;
     fips: string | null;
-    state: string;
+    state: string | null;
     questionnaire?: QuestionnaireAnswers | null;
 }) {
     const [email, setEmail] = useState("");
@@ -55,12 +55,12 @@ function ConfirmSubmitPopup({
                     </>
                 ) : (
                     <>
-                        <p className="text-[#efefd1] mb-4">
+                        <h2 className="text-[#efefd1] mb-4 text-base font-semibold">
                             {drawnPolygons.length === 1
                                 ? "1 polygon drawn!"
                                 : `${drawnPolygons.length} polygons drawn!`}{" "}
                             Submit for analysis?
-                        </p>
+                        </h2>
                         <label
                             htmlFor="submit-email"
                             className="block text-[#efefd1] text-sm mb-1"
@@ -92,6 +92,17 @@ function ConfirmSubmitPopup({
                                 {submitError}
                             </p>
                         )}
+                        <p className="text-[#efefd1]/70 text-[11px] leading-snug mt-3">
+                            By submitting, you agree to the{" "}
+                            <Link to="/legal/terms" target="_blank" className="text-[#d8bd8a] underline">
+                                Terms
+                            </Link>{" "}
+                            and{" "}
+                            <Link to="/legal/privacy" target="_blank" className="text-[#d8bd8a] underline">
+                                Privacy Policy
+                            </Link>
+                            . Prefire provides estimates, not safety guarantees. In a fire emergency, call 911.
+                        </p>
                         <div className="mt-4 flex justify-center">
                             <button
                                 onClick={async () => {
